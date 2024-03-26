@@ -3,11 +3,12 @@
     <h1>Test rokka</h1>
 
     <h3>Single image style</h3>
-    <RokkaImage v-bind="imageProps" :config="imageStyleSingle" />
+    <RokkaImage v-bind="imageProps" :config="imageStyleSingle" preload />
 
     <h3>Pictures image style</h3>
     <RokkaImage
       :config="imageStylePicture"
+      preload
       v-bind="imageProps"
       img-class="max-w-full h-auto"
     />
@@ -15,13 +16,7 @@
     <h3>Sizes image style (16 / 9)</h3>
     <RokkaImage
       :config="imageStyleSizes"
-      v-bind="imageProps"
-      img-class="w-full h-auto"
-    />
-
-    <h3>Sizes image style (keep aspect ratio)</h3>
-    <RokkaImage
-      :config="imageStyleSizesKeepAspect"
+      preload
       v-bind="imageProps"
       img-class="w-full h-auto"
     />
@@ -67,16 +62,6 @@ const imageStylePicture = defineImageStyle({
 const imageStyleSizes = defineImageStyle({
   type: 'sizes',
   aspectRatio: 16 / 9,
-  sizes: {
-    sm: 375,
-    md: 768,
-    lg: 980,
-    xl: 1200,
-  },
-})
-
-const imageStyleSizesKeepAspect = defineImageStyle({
-  type: 'sizes',
   sizes: {
     sm: 375,
     md: 768,
