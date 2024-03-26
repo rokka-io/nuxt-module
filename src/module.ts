@@ -60,8 +60,9 @@ export default defineNuxtModule<ModuleOptions>({
   defaults: {
     host: '',
     viewports: {
-      sm: 768,
-      md: 1024,
+      sm: 0,
+      md: 768,
+      lg: 1024,
     },
   },
   setup(options, nuxt) {

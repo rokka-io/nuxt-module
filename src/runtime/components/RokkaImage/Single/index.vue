@@ -71,7 +71,7 @@ const src = computed(() => {
   const variables: BuildRokkaUrlVariables = {
     w: props.config.width,
   }
-  let height = 0
+  let height = props.config.height || 0
   let stack =
     props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop
 

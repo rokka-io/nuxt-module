@@ -2,31 +2,32 @@
   <ImagePicture
     v-if="hash && typeof config === 'object' && config.type === 'pictures'"
     :key="'pictures_' + hash"
-    :config="config"
     :hash="hash"
+    :config="config"
     :source-width="sourceWidth"
     :source-height="sourceHeight"
-    :alt="alt"
-    :title="title"
     :file-name="fileName"
     :host="host"
+    :preload="preload"
+    :alt="alt"
+    :title="title"
     :loading="loading"
     :img-class="imgClass"
-    :preload="preload"
   />
   <ImageSizes
     v-else-if="hash && typeof config === 'object' && config.type === 'sizes'"
     :key="'sizes_' + hash"
-    :config="config"
     :hash="hash"
+    :config="config"
     :source-width="sourceWidth"
     :source-height="sourceHeight"
-    :alt="alt"
     :file-name="fileName"
+    :preload="preload"
+    :alt="alt"
+    :title="title"
     :host="host"
     :loading="loading"
     :class="imgClass"
-    :preload="preload"
   />
   <ImageSingle
     v-else-if="
@@ -34,11 +35,15 @@
       ((typeof config === 'object' && config.type === 'single') ||
         typeof config === 'string')
     "
-    :config="config"
     :hash="hash"
+    :config="config"
+    :source-width="sourceWidth"
+    :source-height="sourceHeight"
+    :file-name="fileName"
     :alt="alt"
     :title="title"
     :class="imgClass"
+    :loading="loading"
     :preload="preload"
   />
 </template>

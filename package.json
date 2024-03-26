@@ -5,7 +5,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rokka-io/nuxt.git"
+    "url": "git+https://github.com/rokka-io/nuxt-module.git"
   },
   "exports": {
     ".": {
