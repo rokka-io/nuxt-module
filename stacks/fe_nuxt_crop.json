@@ -1,0 +1,42 @@
+{
+  "name": "fe_nuxt_crop",
+  "operations": [
+    {
+      "expressions": {
+        "width": "$w",
+        "height": "$h"
+      },
+      "name": "resize",
+      "options": {
+        "mode": "fill",
+        "sharpen": "false",
+        "upscale_dpr": false,
+        "upscale": false,
+        "enabled": true
+      }
+    },
+    {
+      "expressions": {
+        "width": "$w",
+        "height": "$h"
+      },
+      "name": "crop",
+      "options": {
+        "mode": "absolute",
+        "movearea_y": 0,
+        "anchor": "auto",
+        "scale": 100,
+        "movearea_x": 0,
+        "fallback": "center_center",
+        "enabled": true,
+        "area": null
+      }
+    }
+  ],
+  "options": {},
+  "expressions": [],
+  "variables": {
+    "w": 500,
+    "h": 500
+  }
+}

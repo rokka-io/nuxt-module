@@ -1,0 +1,57 @@
+{
+  "name": "@rokka-io/nuxt",
+  "version": "1.0.0",
+  "description": "Render responsive images with rokka.io in Nuxt 3",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rokka-io/nuxt.git"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/module.mjs",
+      "require": "./dist/module.cjs"
+    }
+  },
+  "main": "./dist/module.cjs",
+  "types": "./dist/types.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "prepack": "nuxt-module-build build && find dist/ -type f -name '*.*' | grep '.spec.' | xargs rm -f",
+    "dev": "nuxi dev playground --host",
+    "typecheck": "nuxi typecheck",
+    "dev:build": "nuxi generate playground",
+    "dev:prepare": "MODULE_BUILDING=true nuxt-module-build build --stub && nuxt-module-build prepare && nuxi prepare playground",
+    "lint": "eslint ./src",
+    "lint:fix": "eslint ./src --fix",
+    "prettier": "prettier --check .",
+    "prettier:fix": "prettier --write ."
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "author": [
+    {
+      "name": "Jan Hug",
+      "url": "https://www.liip.ch/en/team/jan-hug"
+    }
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@nuxt/kit": "^3.10.2"
+  },
+  "devDependencies": {
+    "@nuxt/module-builder": "^0.5.5",
+    "@nuxt/schema": "^3.11.1",
+    "@nuxtjs/eslint-config-typescript": "^12.1.0",
+    "@types/node": "^20.11.30",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-prettier": "^5.1.3",
+    "nuxt": "^3.11.1",
+    "prettier": "^3.2.5"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "name": "fe_nuxt_no_crop",
+  "operations": [
+    {
+      "expressions": {
+        "width": "$w"
+      },
+      "name": "resize",
+      "options": {
+        "mode": "fill",
+        "sharpen": "false",
+        "upscale_dpr": false,
+        "upscale": false,
+        "enabled": true
+      }
+    }
+  ],
+  "options": {},
+  "expressions": [],
+  "variables": {
+    "w": 100
+  }
+}
