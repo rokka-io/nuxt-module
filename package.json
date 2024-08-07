@@ -1,6 +1,6 @@
 {
   "name": "@rokka-io/nuxt",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Render responsive images with rokka.io in Nuxt 3",
   "type": "module",
   "repository": {

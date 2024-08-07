@@ -33,7 +33,9 @@
       }
     }
   ],
-  "options": {},
+  "options": {
+    "autoformat": true
+  },
   "expressions": [],
   "variables": {
     "w": 500,
