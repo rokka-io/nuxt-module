@@ -99,10 +99,10 @@ const images = computed(() =>
   Object.values(props.config.sizes)
     .map((width) => {
       return DPR.map((dpr) => {
-        const dprNumber = parseInt(dpr || '1')
+        const dprNumber = parseFloat(dpr || '1')
         return {
           src: buildUrl(width, props.config.aspectRatio, dpr),
-          width: width * dprNumber,
+          width: Math.round(width * dprNumber),
         }
       })
     })
