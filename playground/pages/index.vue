@@ -12,6 +12,13 @@
       img-class="max-w-full h-auto"
     />
 
+    <h3>Pictures image style with media query</h3>
+    <RokkaImage
+      :config="imageStylePictureMedia"
+      v-bind="imageProps"
+      img-class="max-w-full h-auto"
+    />
+
     <h3>Sizes image style (16 / 9)</h3>
     <RokkaImage
       :config="imageStyleSizes"
@@ -62,6 +69,31 @@ const imageStylePicture = defineImageStyle({
       width: 1680,
     },
   },
+})
+
+const imageStylePictureMedia = defineImageStyle({
+  type: 'pictures',
+  pictures: [
+    {
+      media: '(min-height: 600px)',
+      width: 375,
+      aspectRatio: 16 / 9,
+    },
+    {
+      viewport: 'md',
+      width: 40,
+      height: 40,
+    },
+    {
+      media: '(min-width: 600px) and (min-height: 400px)',
+      width: 1024,
+      height: 300,
+    },
+    {
+      viewport: 'xl',
+      width: 1680,
+    },
+  ],
 })
 
 const imageStyleSizes = defineImageStyle({

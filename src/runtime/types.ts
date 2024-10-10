@@ -79,7 +79,10 @@ export type DefineImageStyleConfigPictures = {
    * This will render a <picture> tag with <source> tags for every viewport.
    * Use this if the aspect ratio changes for every viewport.
    */
-  pictures: Partial<Record<Viewport, DefineImageStyleConfigPicturesViewport>>
+  pictures:
+    | Partial<Record<Viewport, DefineImageStyleConfigPicturesViewport>>
+    | (({ viewport: Viewport } | { media: string }) &
+        DefineImageStyleConfigPicturesViewport)[]
 }
 
 export type DefineImageStyleConfigSingle = {

@@ -135,12 +135,31 @@ const buildUrl = (
   )
 }
 
-const sources = computed(() =>
-  Object.entries(props.config.pictures)
-    .map(([viewport, spec]) => {
-      const minWidth = VIEWPORTS[viewport as Viewport]
-      const media =
-        viewport !== smallestViewport.value ? `(min-width: ${minWidth}px)` : ''
+// check if we are using the viewports or the media approach
+const picturesMedia = computed(() => {
+  const firstEntry = Object.entries(props.config.pictures).at(0)?.at(1)
+  return firstEntry && ('media' in firstEntry || 'viewport' in firstEntry)
+})
+
+const sources = computed(() => {
+  let sources = Object.entries(props.config.pictures).map(
+    ([viewportOrIndex, spec]) => {
+      let media
+      let minWidth = 0
+      if ('media' in spec) {
+        media = spec.media
+      } else {
+        let viewport = viewportOrIndex
+        if ('viewport' in spec) {
+          viewport = spec.viewport
+        }
+
+        minWidth = VIEWPORTS[viewport as Viewport]
+        media =
+          viewport !== smallestViewport.value
+            ? `(min-width: ${minWidth}px)`
+            : ''
+      }
 
       const srcsetItems = DPR.map((v) => {
         const url = buildUrl(spec, v)
@@ -163,11 +182,18 @@ const sources = computed(() =>
       }
 
       return { srcset, media, minWidth, width: spec.width, height, srcsetItems }
-    })
-    .sort((a, b) => {
+    },
+  )
+
+  if (!picturesMedia.value) {
+    // sort by viewpwort minWidth if we have no media queries. Otherwiese the provided order is used.
+    sources = sources.sort((a, b) => {
       return b.minWidth - a.minWidth
-    }),
-)
+    })
+  }
+
+  return sources
+})
 
 const fallback = computed(() => {
   const smallest = sources.value[sources.value.length - 1]
