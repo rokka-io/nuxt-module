@@ -1,10 +1,15 @@
 import { type Viewport } from '#rokka/generated-types'
 
-export type DefineImageStyleConfigPicturesViewport = {
-  width: number
-  height?: number
-  aspectRatio?: number
-}
+export type DefineImageStyleConfigPicturesViewport =
+  | {
+      width: number
+      height?: number
+      aspectRatio?: number
+    }
+  | {
+      height: number
+      aspectRatio: number
+    }
 
 export type DefineImageStyleStacks = {
   /**

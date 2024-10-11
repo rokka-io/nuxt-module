@@ -110,19 +110,22 @@ const buildUrl = (
 ) => {
   const variables: BuildRokkaUrlVariables = {
     w: spec.width,
-    h: undefined,
+    h: spec.height,
   }
   let height = spec.height
-  let stack: string =
+  let stack =
     props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop
 
-  if (!height && spec.aspectRatio) {
-    height = Math.round(spec.width / spec.aspectRatio)
+  if (!variables.h && spec.aspectRatio) {
+    variables.h = Math.round(spec.width / spec.aspectRatio)
   }
 
-  if (height) {
+  if (!variables.w && spec.aspectRatio) {
+    variables.w = Math.round(spec.height * spec.aspectRatio)
+  }
+
+  if (variables.h) {
     stack = props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
-    variables.h = height
   }
 
   return buildRokkaUrl(
@@ -181,7 +184,12 @@ const sources = computed(() => {
         }
       }
 
-      return { srcset, media, minWidth, width: spec.width, height, srcsetItems }
+      let width = spec.width
+      if (!width) {
+        width = Math.round(spec.height * aspectRatio)
+      }
+
+      return { srcset, media, minWidth, width, height, srcsetItems }
     },
   )
 
