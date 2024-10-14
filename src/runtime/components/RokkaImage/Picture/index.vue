@@ -113,7 +113,7 @@ const buildUrl = (
     h: undefined,
   }
   let height = spec.height
-  let stack =
+  let stack: string =
     props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop
 
   if (!height && spec.aspectRatio) {
