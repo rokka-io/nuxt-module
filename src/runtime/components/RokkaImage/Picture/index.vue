@@ -108,20 +108,17 @@ const buildUrl = (
   spec: DefineImageStyleConfigPicturesViewport,
   dpr?: string,
 ) => {
+  const width = 'width' in spec ? spec.width : Math.round(spec.height * spec.aspectRatio)
   const variables: BuildRokkaUrlVariables = {
-    w: spec.width,
+    w: width,
     h: spec.height,
   }
-  let height = spec.height
+
   let stack =
     props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop
 
   if (!variables.h && spec.aspectRatio) {
-    variables.h = Math.round(spec.width / spec.aspectRatio)
-  }
-
-  if (!variables.w && spec.aspectRatio) {
-    variables.w = Math.round(spec.height * spec.aspectRatio)
+    variables.h = Math.round(width / spec.aspectRatio)
   }
 
   if (variables.h) {
@@ -141,19 +138,19 @@ const buildUrl = (
 // check if we are using the viewports or the media approach
 const picturesMedia = computed(() => {
   const firstEntry = Object.entries(props.config.pictures).at(0)?.at(1)
-  return firstEntry && ('media' in firstEntry || 'viewport' in firstEntry)
+  return typeof firstEntry === 'object' && ('media' in firstEntry || 'viewport' in firstEntry)
 })
 
 const sources = computed(() => {
   let sources = Object.entries(props.config.pictures).map(
     ([viewportOrIndex, spec]) => {
-      let media
+      let media: string
       let minWidth = 0
-      if ('media' in spec) {
+      if ('media' in spec && typeof spec.media === 'string') {
         media = spec.media
       } else {
         let viewport = viewportOrIndex
-        if ('viewport' in spec) {
+        if ('viewport' in spec && typeof spec.viewport === 'string') {
           viewport = spec.viewport
         }
 
@@ -178,15 +175,13 @@ const sources = computed(() => {
       // reserve space needed for each image source.
       const aspectRatio = spec.aspectRatio || props.config.aspectRatio
       let height = spec.height
-      if (!height) {
-        if (aspectRatio) {
-          height = Math.round(spec.width / aspectRatio)
-        }
+      if (!height && aspectRatio && 'width' in spec) {
+        height = Math.round(spec.width / aspectRatio)
       }
 
-      let width = spec.width
-      if (!width) {
-        width = Math.round(spec.height * aspectRatio)
+      let width = 'width' in spec ? spec.width : undefined
+      if (!width && height && aspectRatio) {
+        width = Math.round(height * aspectRatio)
       }
 
       return { srcset, media, minWidth, width, height, srcsetItems }

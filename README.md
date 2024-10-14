@@ -61,6 +61,11 @@ const imageStyle = defineImageStyle({
       width: 375,
       aspectRatio: 16 / 9,
     },
+    // Force 550px height in a specific aspect ratio and crop image.
+    md: {
+      height: 550,
+      aspectRatio: 16 / 9
+    }
     // Force exact dimensions and crop image.
     lg: {
       width: 1024,
@@ -71,6 +76,36 @@ const imageStyle = defineImageStyle({
       width: 1680,
     },
   },
+})
+```
+
+Or with general media query support:
+```typescript
+const imageStyle = defineImageStyle({
+  type: 'pictures',
+  pictures: [
+    // Define a media query. Width, height and aspectRatio are configurable the same as above.
+    {
+      media: '(min-height: 600px)',
+      width: 200,
+      aspectRatio: 4/3
+    },
+    {
+      media: '(min-height: 1200px)',
+      width: 500,
+      height: 500
+    },
+    // You can still specify viewports.
+    {
+      viewport: 'md',
+      width: 100
+    },
+    // Define a fallback if all cases don't match.
+    {
+      media: '',
+      width: 2000
+    }
+  ]
 })
 ```
 
