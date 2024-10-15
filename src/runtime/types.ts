@@ -86,8 +86,16 @@ export type DefineImageStyleConfigPictures = {
    */
   pictures:
     | Partial<Record<Viewport, DefineImageStyleConfigPicturesViewport>>
-    | (({ viewport: Viewport } | { media: string }) &
-        DefineImageStyleConfigPicturesViewport)[]
+    | Array<
+        | ({
+            viewport: Viewport
+            media?: never
+          } & DefineImageStyleConfigPicturesViewport)
+        | ({
+            media: string
+            viewport?: never
+          } & DefineImageStyleConfigPicturesViewport)
+      >
 }
 
 export type DefineImageStyleConfigSingle = {
