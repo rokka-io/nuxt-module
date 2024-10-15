@@ -45,6 +45,7 @@
     :class="imgClass"
     :loading="loading"
     :preload="preload"
+    :host="host"
   />
 </template>
 
