@@ -34,12 +34,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "author": [
-    {
-      "name": "Jan Hug",
-      "url": "https://www.liip.ch/en/team/jan-hug"
-    }
-  ],
+  "author": "Jan Hug - https://www.liip.ch/en/team/jan-hug",
   "license": "MIT",
   "dependencies": {
     "@nuxt/kit": "^3.10.2"
