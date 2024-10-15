@@ -22,7 +22,6 @@
 import { VIEWPORTS, DPR, type Viewport } from '#rokka/generated-types'
 import {
   type DefineImageStyleConfigPictures,
-  type DefineImageStyleConfigPicturesViewport,
   type BuildRokkaUrlVariables,
 } from '#rokka/types'
 import {
@@ -100,26 +99,59 @@ const props = defineProps<{
   preload?: boolean
 }>()
 
-const smallestViewport = computed(
-  () => Object.keys(props.config.pictures)[0] as Viewport,
-)
+type PictureConfig = {
+  viewport?: Viewport
+  media?: string
+  width?: number
+  height?: number
+  aspectRatio?: number
+  minWidth?: number
+}
 
-const buildUrl = (
-  spec: DefineImageStyleConfigPicturesViewport,
-  dpr?: string,
-) => {
-  const width = 'width' in spec ? spec.width : Math.round(spec.height * spec.aspectRatio)
+function getMediaQueryFromViewport(viewport?: Viewport): string | undefined {
+  if (!viewport) {
+    return
+  }
+  const minWidth: number | undefined = VIEWPORTS[viewport]
+
+  if (minWidth) {
+    return `(min-width: ${minWidth}px)`
+  }
+}
+
+function getPictureConfigs(): PictureConfig[] {
+  // User provided an array.
+  if (Array.isArray(props.config.pictures)) {
+    return props.config.pictures.map((v) => {
+      const media = v.media || getMediaQueryFromViewport(v.viewport)
+      return {
+        viewport: v.viewport,
+        media,
+        width: 'width' in v ? v.width : undefined,
+        height: v.height,
+        aspectRatio: v.aspectRatio || props.config.aspectRatio,
+        minWidth: v.viewport ? VIEWPORTS[v.viewport] : undefined,
+      }
+    })
+  }
+
+  // User provided an object. Convert it to an array.
+  return Object.entries(props.config.pictures).map(([viewport, config]) => {
+    return {
+      viewport: viewport as Viewport,
+      ...config,
+    }
+  })
+}
+
+const buildUrl = (width: number, height?: number, dpr?: string) => {
   const variables: BuildRokkaUrlVariables = {
     w: width,
-    h: spec.height,
+    h: height,
   }
 
   let stack =
     props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop
-
-  if (!variables.h && spec.aspectRatio) {
-    variables.h = Math.round(width / spec.aspectRatio)
-  }
 
   if (variables.h) {
     stack = props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
@@ -135,34 +167,64 @@ const buildUrl = (
   )
 }
 
-// check if we are using the viewports or the media approach
-const picturesMedia = computed(() => {
-  const firstEntry = Object.entries(props.config.pictures).at(0)?.at(1)
-  return typeof firstEntry === 'object' && ('media' in firstEntry || 'viewport' in firstEntry)
-})
+function getWidth(spec: PictureConfig): number | undefined {
+  if (spec.width) {
+    // Width is provided explicitly.
+    return spec.width
+  } else if (spec.height && spec.aspectRatio) {
+    // Height and aspect ratio is provided.
+    return spec.height * spec.aspectRatio
+  } else if (spec.viewport) {
+    // Viewport available.
+    return VIEWPORTS[spec.viewport]
+  } else if (props.sourceWidth) {
+    return props.sourceWidth
+  }
+}
 
-const sources = computed(() => {
-  let sources = Object.entries(props.config.pictures).map(
-    ([viewportOrIndex, spec]) => {
-      let media: string
-      let minWidth = 0
-      if ('media' in spec && typeof spec.media === 'string') {
-        media = spec.media
-      } else {
-        let viewport = viewportOrIndex
-        if ('viewport' in spec && typeof spec.viewport === 'string') {
-          viewport = spec.viewport
-        }
+function getHeight(spec: PictureConfig): number | undefined {
+  if (spec.height) {
+    // Height has been provided explicitly.
+    return spec.height
+  } else if (spec.width && spec.aspectRatio) {
+    // Width and aspect ratio provided. We can calculate the height.
+    return spec.width / spec.aspectRatio
+  } else if (spec.viewport && spec.aspectRatio) {
+    // Neither width nor height provided. Use the min-width of the breakpoint to calculate the height.
+    // Use the breakpoint of the viewport as the width.
+    const minWidth = VIEWPORTS[spec.viewport]
+    return minWidth * spec.aspectRatio
+  }
+}
 
-        minWidth = VIEWPORTS[viewport as Viewport]
-        media =
-          viewport !== smallestViewport.value
-            ? `(min-width: ${minWidth}px)`
-            : ''
+function notNullish<T = any>(val?: T | null | undefined): val is T {
+  return val != null
+}
+
+type Source = {
+  srcset: string
+  srcsetItems: [string, string][]
+  width: number
+  height?: number
+  media?: string
+  viewport?: Viewport
+  minWidth?: number
+}
+
+const sources = computed<Source[]>(() => {
+  return getPictureConfigs()
+    .map((spec) => {
+      const width = getWidth(spec)
+      const height = getHeight(spec)
+      if (!width) {
+        console.error(
+          'Invalid image style config. The config must define either a width or height to determine the image width.',
+          props.config,
+        )
+        return null
       }
-
-      const srcsetItems = DPR.map((v) => {
-        const url = buildUrl(spec, v)
+      const srcsetItems: [string, string][] = DPR.map((v) => {
+        const url = buildUrl(width, height, v)
         const pixelRatio = v || '1'
 
         return [url, pixelRatio + 'x']
@@ -170,67 +232,69 @@ const sources = computed(() => {
 
       const srcset = srcsetItems.map((v) => v.join(' ')).join(', ')
 
-      // Calculate the width and height for each source.
-      // That way we can prevent layout shift because the browser can already
-      // reserve space needed for each image source.
-      const aspectRatio = spec.aspectRatio || props.config.aspectRatio
-      let height = spec.height
-      if (!height && aspectRatio && 'width' in spec) {
-        height = Math.round(spec.width / aspectRatio)
+      return {
+        srcset,
+        srcsetItems,
+        width,
+        height,
+        media: spec.media,
+        viewport: spec.viewport,
+        minWidth: spec.minWidth,
       }
-
-      let width = 'width' in spec ? spec.width : undefined
-      if (!width && height && aspectRatio) {
-        width = Math.round(height * aspectRatio)
-      }
-
-      return { srcset, media, minWidth, width, height, srcsetItems }
-    },
-  )
-
-  if (!picturesMedia.value) {
-    // sort by viewpwort minWidth if we have no media queries. Otherwiese the provided order is used.
-    sources = sources.sort((a, b) => {
-      return b.minWidth - a.minWidth
     })
-  }
+    .filter(notNullish)
+})
 
-  return sources
+const sourcesWithMinWidthSorted = computed(() => {
+  return sources.value
+    .map((v) => {
+      if (!v.minWidth) {
+        return null
+      }
+
+      return {
+        ...v,
+        minWidth: v.minWidth,
+      }
+    })
+    .filter(notNullish)
+    .sort((a, b) => a.minWidth - b.minWidth)
 })
 
 const fallback = computed(() => {
-  const smallest = sources.value[sources.value.length - 1]
-  if (!smallest) {
+  const source =
+    sources.value.find((v) => v.viewport === 'fallback') ||
+    sourcesWithMinWidthSorted.value[0]
+
+  if (!source) {
     return
   }
-  const fallbackUrl = smallest.srcsetItems[0]?.[0]
+  const fallbackUrl = source.srcsetItems[0]?.[0]
   if (!fallbackUrl) {
     return
   }
 
   return {
     src: fallbackUrl,
-    width: smallest.width,
-    height: smallest.height,
+    width: source.width,
+    height: source.height,
   }
 })
 
-if (props.preload && process.server) {
+if (props.preload && import.meta.server) {
   useServerHead({
-    link: [...sources.value]
-      .sort((a, b) => a.minWidth - b.minWidth)
-      .map((source, index, self) => {
-        const next = self[index + 1]
-        return {
-          rel: 'preload',
-          as: 'image',
-          imagesrcset: source.srcset,
-          media:
-            index === 0 && next
-              ? `(max-width: ${next.minWidth - 1}px)`
-              : source.media,
-        }
-      }),
+    link: [...sourcesWithMinWidthSorted.value].map((source, index, self) => {
+      const next = self[index + 1]
+      return {
+        rel: 'preload',
+        as: 'image',
+        imagesrcset: source.srcset,
+        media:
+          index === 0 && next
+            ? `(max-width: ${next.minWidth - 1}px)`
+            : source.media,
+      }
+    }),
   })
 }
 </script>
