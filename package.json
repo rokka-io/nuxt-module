@@ -22,6 +22,7 @@
   "scripts": {
     "prepare": "nuxt-module-build prepare",
     "prepack": "nuxt-module-build build && find dist/ -type f -name '*.*' | grep '.spec.' | xargs rm -f",
+    "build": "npm run prepare && npm run prepack",
     "dev": "nuxi dev playground --host",
     "typecheck": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit",
     "dev:build": "nuxi generate playground",
