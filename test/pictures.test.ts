@@ -48,7 +48,7 @@ describe('The <RokkaImage> component for pictures', async () => {
     expect(data.sources[1].width).toEqual('1024')
 
     // Should not have a media query because it's the last one.
-    expect(data.sources[2].media).toMatchInlineSnapshot(`""`)
+    expect(data.sources[2].media).toBeFalsy()
     // Should have a height that is calculated from the aspect ratio.
     expect(data.sources[2].height).toEqual('938')
     // Should have a width because one is set explicitly.

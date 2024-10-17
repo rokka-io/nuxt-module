@@ -22,7 +22,6 @@
 import { VIEWPORTS, DPR, type Viewport } from '#rokka/generated-types'
 import type {
   DefineImageStyleConfigPictures,
-  DefineImageStyleConfigPicturesViewport,
   BuildRokkaUrlVariables,
 } from '#rokka/types'
 import {
@@ -137,12 +136,30 @@ function getPictureConfigs(): PictureConfig[] {
   }
 
   // User provided an object. Convert it to an array.
-  return Object.entries(props.config.pictures).map(([viewport, config]) => {
-    return {
-      viewport: viewport as Viewport,
-      ...config,
-    }
-  })
+  return Object.entries(props.config.pictures)
+    .map(([key, config]) => {
+      const viewport = key as Viewport
+      return {
+        viewport,
+        ...config,
+        aspectRatio: config.aspectRatio || props.config.aspectRatio,
+        minWidth: VIEWPORTS[viewport],
+        media: getMediaQueryFromViewport(viewport),
+      }
+    })
+    .sort((a, b) => {
+      return b.minWidth - a.minWidth
+    })
+    .map((item, index, arr) => {
+      // The last one should not have a media query.
+      if (index === arr.length - 1) {
+        return {
+          ...item,
+          media: undefined,
+        }
+      }
+      return item
+    })
 }
 
 const buildUrl = (width: number, height?: number, dpr?: string) => {
@@ -174,7 +191,7 @@ function getWidth(spec: PictureConfig): number | undefined {
     return spec.width
   } else if (spec.height && spec.aspectRatio) {
     // Height and aspect ratio is provided.
-    return spec.height * spec.aspectRatio
+    return Math.round(spec.height * spec.aspectRatio)
   } else if (spec.viewport) {
     // Viewport available.
     return VIEWPORTS[spec.viewport]
@@ -189,12 +206,12 @@ function getHeight(spec: PictureConfig): number | undefined {
     return spec.height
   } else if (spec.width && spec.aspectRatio) {
     // Width and aspect ratio provided. We can calculate the height.
-    return spec.width / spec.aspectRatio
+    return Math.round(spec.width / spec.aspectRatio)
   } else if (spec.viewport && spec.aspectRatio) {
     // Neither width nor height provided. Use the min-width of the breakpoint to calculate the height.
     // Use the breakpoint of the viewport as the width.
     const minWidth = VIEWPORTS[spec.viewport]
-    return minWidth * spec.aspectRatio
+    return Math.round(minWidth * spec.aspectRatio)
   }
 }
 
