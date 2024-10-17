@@ -4,9 +4,9 @@
 
 <script lang="ts" setup>
 import { getImageAttributes } from './../../../helpers'
-import {
-  type BuildRokkaUrlVariables,
-  type DefineImageStyleConfigSingle,
+import type {
+  BuildRokkaUrlVariables,
+  DefineImageStyleConfigSingle,
 } from '#rokka/types'
 import { useRuntimeConfig, buildRokkaUrl, computed } from '#imports'
 

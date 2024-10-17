@@ -53,7 +53,7 @@
 import ImagePicture from './Picture/index.vue'
 import ImageSizes from './Sizes/index.vue'
 import ImageSingle from './Single/index.vue'
-import { type DefineImageStyleConfig } from '#rokka/types'
+import type { DefineImageStyleConfig } from '#rokka/types'
 
 defineProps<{
   /**

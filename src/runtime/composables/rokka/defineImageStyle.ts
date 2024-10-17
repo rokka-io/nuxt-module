@@ -1,4 +1,4 @@
-import { type DefineImageStyleConfig } from '#rokka/types'
+import type { DefineImageStyleConfig } from '#rokka/types'
 
 export function defineImageStyle(
   config: DefineImageStyleConfig,
