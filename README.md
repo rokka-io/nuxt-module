@@ -80,6 +80,7 @@ const imageStyle = defineImageStyle({
 ```
 
 Or with general media query support:
+
 ```typescript
 const imageStyle = defineImageStyle({
   type: 'pictures',
@@ -88,24 +89,24 @@ const imageStyle = defineImageStyle({
     {
       media: '(min-height: 600px)',
       width: 200,
-      aspectRatio: 4/3
+      aspectRatio: 4 / 3,
     },
     {
       media: '(min-height: 1200px)',
       width: 500,
-      height: 500
+      height: 500,
     },
     // You can still specify viewports.
     {
       viewport: 'md',
-      width: 100
+      width: 100,
     },
     // Define a fallback if all cases don't match.
     {
       media: '',
-      width: 2000
-    }
-  ]
+      width: 2000,
+    },
+  ],
 })
 ```
 

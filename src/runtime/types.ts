@@ -83,6 +83,10 @@ export type DefineImageStyleConfigPictures = {
    *
    * This will render a <picture> tag with <source> tags for every viewport.
    * Use this if the aspect ratio changes for every viewport.
+   *
+   * If an array is provided, the order of the array is important: For every
+   * array item a <source> is generated, meaning that the browser will use
+   * the first source whose media query matches.
    */
   pictures:
     | Partial<Record<Viewport, DefineImageStyleConfigPicturesViewport>>

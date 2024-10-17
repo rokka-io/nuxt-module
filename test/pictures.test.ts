@@ -141,4 +141,53 @@ describe('The <RokkaImage> component for pictures', async () => {
     // A width is defined and it overrides the root aspect ratio.
     expect(data.sources[2].height).toEqual('300') // Aspect ratio: 4 / 3 = 400 * 0.75 = 300
   })
+
+  it('renders the pictures element with custom media queries.', async () => {
+    const page = await createPage('/pictures-media-query')
+    const data = await buildPictureData(page, 'pictures')
+
+    expect(data.alt).toMatchInlineSnapshot(`"My alt text"`)
+    expect(data.title).toMatchInlineSnapshot(`"My title text"`)
+    expect(data.src).toMatchInlineSnapshot(
+      `"https://rokka-demos.rokka.io/STACK_CROP/variables-w-300-h-300/HASH/image.jpg"`,
+    )
+    expect(data.sources).toHaveLength(4)
+
+    // First one should be for the XL viewport, because it refernces the xl viewport.
+    expect(data.sources[0].media).toMatchInlineSnapshot(`"(min-width: 1680px)"`)
+    // Should not have a height because none is set.
+    expect(data.sources[0].height).toBeNull()
+    expect(data.sources[0].srcsets).toMatchInlineSnapshot(`
+      [
+        {
+          "dpi": "1x",
+          "url": "https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-1680/HASH/image.jpg",
+        },
+        {
+          "dpi": "1.5x",
+          "url": "https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-1680--options-dpr-1.5/HASH/image.jpg",
+        },
+        {
+          "dpi": "2x",
+          "url": "https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-1680--options-dpr-2/HASH/image.jpg",
+        },
+      ]
+    `)
+
+    // Second one has a custom media query.
+    expect(data.sources[1].media).toMatchInlineSnapshot(
+      `"(min-width: 600px) and (min-height: 400px)"`,
+    )
+    // Should have a height because one is set explicitly.
+    expect(data.sources[1].height).toEqual('300')
+    // Should have a width because one is set explicitly.
+    expect(data.sources[1].width).toEqual('1024')
+
+    // Has a custom media query.
+    expect(data.sources[2].media).toMatchInlineSnapshot(`"(min-height: 600px)"`)
+    // Should have a height that is calculated from the aspect ratio.
+    expect(data.sources[2].height).toEqual('211')
+    // Should have a width because one is set explicitly.
+    expect(data.sources[2].width).toEqual('375')
+  })
 })
