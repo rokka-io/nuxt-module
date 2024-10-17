@@ -1,4 +1,4 @@
-import { type Viewport } from '#rokka/generated-types'
+import type { Viewport } from '#rokka/generated-types'
 
 export type DefineImageStyleConfigPicturesViewport =
   | {

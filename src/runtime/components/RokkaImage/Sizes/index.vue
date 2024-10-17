@@ -5,9 +5,9 @@
 <script lang="ts" setup>
 import { getImageAttributes } from './../../../helpers'
 import { VIEWPORTS, DPR, type Viewport } from '#rokka/generated-types'
-import {
-  type BuildRokkaUrlVariables,
-  type DefineImageStyleConfigSizes,
+import type {
+  BuildRokkaUrlVariables,
+  DefineImageStyleConfigSizes,
 } from '#rokka/types'
 import {
   useRuntimeConfig,
@@ -99,7 +99,7 @@ const images = computed(() =>
   Object.values(props.config.sizes)
     .map((width) => {
       return DPR.map((dpr) => {
-        const dprNumber = parseFloat(dpr || '1')
+        const dprNumber = Number.parseFloat(dpr || '1')
         return {
           src: buildUrl(width, props.config.aspectRatio, dpr),
           width: Math.round(width * dprNumber),
@@ -134,7 +134,7 @@ const srcset = computed(() =>
     .join(', '),
 )
 
-if (props.preload && process.server) {
+if (props.preload && import.meta.server) {
   useServerHead({
     link: [
       {

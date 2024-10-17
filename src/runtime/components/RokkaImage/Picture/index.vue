@@ -20,9 +20,10 @@
 
 <script lang="ts" setup>
 import { VIEWPORTS, DPR, type Viewport } from '#rokka/generated-types'
-import {
-  type DefineImageStyleConfigPictures,
-  type BuildRokkaUrlVariables,
+import type {
+  DefineImageStyleConfigPictures,
+  DefineImageStyleConfigPicturesViewport,
+  BuildRokkaUrlVariables,
 } from '#rokka/types'
 import {
   buildRokkaUrl,

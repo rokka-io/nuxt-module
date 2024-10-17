@@ -1,4 +1,4 @@
-import { fileURLToPath } from 'url'
+import { fileURLToPath } from 'node:url'
 import {
   createResolver,
   defineNuxtModule,
@@ -45,8 +45,6 @@ export type ModuleOptions = {
     noCrop: string
   }
 }
-
-export type ModuleHooks = {}
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
@@ -127,7 +125,7 @@ export type Viewport = keyof typeof VIEWPORTS`
   },
 })
 
-declare module 'nuxt/schema' {
+declare module '@nuxt/schema' {
   interface PublicRuntimeConfig {
     rokkaHost: string
     rokkaStackCrop: string
