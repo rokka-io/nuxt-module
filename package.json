@@ -24,7 +24,7 @@
     "dev": "nuxi dev playground --host",
     "typecheck": "vue-tsc --noEmit && cd playground && vue-tsc --noEmit",
     "dev:build": "nuxi generate playground",
-    "dev:prepare": "MODULE_BUILDING=true nuxt-module-build build --stub && nuxt-module-build prepare && nuxi prepare playground",
+    "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxi prepare playground",
     "lint": "eslint ./src",
     "lint:fix": "eslint ./src --fix",
     "prettier": "prettier --check .",

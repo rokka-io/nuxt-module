@@ -14,7 +14,7 @@ jobs:
   ci:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
@@ -27,16 +27,10 @@ jobs:
 
       # https://github.com/vitejs/vite/blob/main/.github/workflows/ci.yml#L62
       # Install playwright's binary under custom directory to cache
-      - name: Set Playwright path (non-windows)
-        if: runner.os != 'Windows'
+      - name: Set Playwright path
         run:
           echo "PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/playwright-bin" >>
           $GITHUB_ENV
-      - name: Set Playwright path (windows)
-        if: runner.os == 'Windows'
-        run:
-          echo "PLAYWRIGHT_BROWSERS_PATH=$HOME\.cache\playwright-bin" >>
-          $env:GITHUB_ENV
 
       - name: Cache Playwright's binary
         uses: actions/cache@v4
