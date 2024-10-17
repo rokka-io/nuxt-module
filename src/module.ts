@@ -46,8 +46,6 @@ export type ModuleOptions = {
   }
 }
 
-export type ModuleHooks = {}
-
 export default defineNuxtModule<ModuleOptions>({
   meta: {
     name: '@rokka-io/nuxt',
@@ -126,7 +124,7 @@ export type Viewport = keyof typeof VIEWPORTS`
   },
 })
 
-declare module 'nuxt/schema' {
+declare module '@nuxt/schema' {
   interface PublicRuntimeConfig {
     rokkaHost: string
     rokkaStackCrop: string
