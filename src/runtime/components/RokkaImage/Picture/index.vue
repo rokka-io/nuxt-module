@@ -20,10 +20,10 @@
 
 <script lang="ts" setup>
 import { VIEWPORTS, DPR, type Viewport } from '#rokka/generated-types'
-import {
-  type DefineImageStyleConfigPictures,
-  type DefineImageStyleConfigPicturesViewport,
-  type BuildRokkaUrlVariables,
+import type {
+  DefineImageStyleConfigPictures,
+  DefineImageStyleConfigPicturesViewport,
+  BuildRokkaUrlVariables,
 } from '#rokka/types'
 import {
   buildRokkaUrl,
@@ -186,7 +186,7 @@ const fallback = computed(() => {
   }
 })
 
-if (props.preload && process.server) {
+if (props.preload && import.meta.server) {
   useServerHead({
     link: [...sources.value]
       .sort((a, b) => a.minWidth - b.minWidth)
