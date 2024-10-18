@@ -281,11 +281,12 @@ const sourcesWithMinWidthSorted = computed(() => {
 
 const fallback = computed(() => {
   // use explicitly defined fallback image
-  // OR if we have minWidths the one with the lowest minWidth
+  // OR if we have minWidths the one with the lowest minWidth (usually the case if we use viewports)
   // OR the last one (for media queries this is generlly the fallthrough / fallback one)
   const source =
     sources.value.find((v) => v.viewport === 'fallback') ||
-    sourcesWithMinWidthSorted.value[0] || sources.value[sources.value.length - 1]
+    sourcesWithMinWidthSorted.value[0] ||
+    sources.value[sources.value.length - 1]
 
   if (!source) {
     return
