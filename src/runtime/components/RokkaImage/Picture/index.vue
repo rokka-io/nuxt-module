@@ -1,5 +1,5 @@
 <template>
-  <picture v-if="fallback">
+  <picture>
     <source
       v-for="(source, index) in sources"
       :key="index"
@@ -11,7 +11,7 @@
     <img
       :alt="alt"
       :title="title"
-      :src="fallback.src"
+      :src="fallback?.src"
       :loading="loading"
       :class="imgClass"
     />
@@ -280,9 +280,12 @@ const sourcesWithMinWidthSorted = computed(() => {
 })
 
 const fallback = computed(() => {
+  // use explicitly defined fallback image
+  // OR if we have minWidths the one with the lowest minWidth
+  // OR the last one (for media queries this is generlly the fallthrough / fallback one)
   const source =
     sources.value.find((v) => v.viewport === 'fallback') ||
-    sourcesWithMinWidthSorted.value[0]
+    sourcesWithMinWidthSorted.value[0] || sources.value[sources.value.length - 1]
 
   if (!source) {
     return
