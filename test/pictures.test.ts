@@ -142,6 +142,43 @@ describe('The <RokkaImage> component for pictures', async () => {
     expect(data.sources[2].height).toEqual('300') // Aspect ratio: 4 / 3 = 400 * 0.75 = 300
   })
 
+  it('sorts the viewports in object syntax', async () => {
+    const page = await createPage('/pictures-sorting')
+    const data = await buildPictureData(page, 'pictures')
+
+    expect(data.sources[0].width).toEqual('600')
+    expect(data.sources[0].height).toEqual('600')
+
+    expect(data.sources[1].width).toEqual('500')
+    expect(data.sources[1].height).toEqual('500')
+
+    expect(data.sources[2].width).toEqual('400')
+    expect(data.sources[2].height).toEqual('400')
+
+    expect(data.sources[3].width).toEqual('300')
+    expect(data.sources[3].height).toEqual('300')
+  })
+
+  it('uses the special fallback viewport if provided', async () => {
+    const page = await createPage('/pictures-fallback')
+    const data = await buildPictureData(page, 'pictures')
+
+    expect(data.sources[0].width).toEqual('600')
+    expect(data.sources[0].height).toEqual('600')
+
+    expect(data.sources[1].width).toEqual('500')
+    expect(data.sources[1].height).toEqual('500')
+
+    expect(data.sources[2].width).toEqual('400')
+    expect(data.sources[2].height).toEqual('400')
+
+    expect(data.sources[3].width).toEqual('300')
+    expect(data.sources[3].height).toEqual('300')
+
+    expect(data.sources[4].width).toEqual('200')
+    expect(data.sources[4].height).toEqual('200')
+  })
+
   it('does not do any calculations if all sizes are provided', async () => {
     const page = await createPage('/pictures-no-calc')
     const data = await buildPictureData(page, 'pictures')

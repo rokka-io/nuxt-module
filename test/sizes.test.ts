@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import { setup, createPage } from '@nuxt/test-utils/e2e'
 import { buildSizesData } from './helpers'
+import exp from 'node:constants'
 
 describe('The <RokkaImage> component for sizes', async () => {
   await setup({
@@ -119,5 +120,17 @@ describe('The <RokkaImage> component for sizes', async () => {
     img.srcset.forEach((srcset) => {
       expect(srcset.url).toContain('STACK_NO_CROP')
     })
+  })
+
+  it('uses the special fallback viewport if provided', async () => {
+    const page = await createPage('/sizes-fallback')
+    const img = await buildSizesData(page, 'sizes')
+
+    expect(img.sizes).toHaveLength(5)
+    expect(img.sizes[4].mediaQuery).toBeFalsy()
+    expect(img.sizes[4].width).toEqual('200px')
+    expect(img.src).toMatchInlineSnapshot(
+      `"https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-200/HASH/image.jpg"`,
+    )
   })
 })
