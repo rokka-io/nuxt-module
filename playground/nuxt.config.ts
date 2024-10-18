@@ -13,6 +13,14 @@ export default defineNuxtConfig({
     },
   },
 
+  vite: {
+    server: {
+      watch: {
+        usePolling: true,
+      },
+    },
+  },
+
   rokka: {
     host: 'rokka-demos.rokka.io',
     dpr: ['', '1.5', '2'],
@@ -27,4 +35,6 @@ export default defineNuxtConfig({
       crop: 'fe_nuxt_crop_copy',
     },
   },
+
+  compatibilityDate: '2024-10-17',
 })

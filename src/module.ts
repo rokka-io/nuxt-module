@@ -94,15 +94,16 @@ export default defineNuxtModule<ModuleOptions>({
         if (!options.viewports) {
           throw new Error('Missing viewports in rokka options.')
         }
+        const viewports = Object.entries({ fallback: 0, ...options.viewports })
+          .map(([key, value]) => {
+            return `'${key}': ${value}`
+          })
+          .join(',\n  ')
         return `
 export const DPR = ${JSON.stringify(dpr)}
 
 export const VIEWPORTS = {
-  ${Object.entries(options.viewports)
-    .map(([key, value]) => {
-      return `'${key}': ${value}`
-    })
-    .join(',\n  ')}
+  ${viewports}
 } as const
 
 export type Viewport = keyof typeof VIEWPORTS`
