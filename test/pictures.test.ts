@@ -20,10 +20,12 @@ describe('The <RokkaImage> component for pictures', async () => {
     expect(data.sources).toHaveLength(3)
 
     // First one should be for the XL viewport.
-    expect(data.sources[0].media).toMatchInlineSnapshot(`"(min-width: 1680px)"`)
+    expect(data.sources[0]!.media).toMatchInlineSnapshot(
+      `"(min-width: 1680px)"`,
+    )
     // Should not have a height because none is set.
-    expect(data.sources[0].height).toBeNull()
-    expect(data.sources[0].srcsets).toMatchInlineSnapshot(`
+    expect(data.sources[0]!.height).toBeNull()
+    expect(data.sources[0]!.srcsets).toMatchInlineSnapshot(`
       [
         {
           "dpi": "1x",
@@ -41,18 +43,20 @@ describe('The <RokkaImage> component for pictures', async () => {
     `)
 
     // Should have the media query for the LG viewport.
-    expect(data.sources[1].media).toMatchInlineSnapshot(`"(min-width: 1280px)"`)
+    expect(data.sources[1]!.media).toMatchInlineSnapshot(
+      `"(min-width: 1280px)"`,
+    )
     // Should have a height because one is set explicitly.
-    expect(data.sources[1].height).toEqual('300')
+    expect(data.sources[1]!.height).toEqual('300')
     // Should have a width because one is set explicitly.
-    expect(data.sources[1].width).toEqual('1024')
+    expect(data.sources[1]!.width).toEqual('1024')
 
     // Should not have a media query because it's the last one.
-    expect(data.sources[2].media).toMatchInlineSnapshot(`""`)
+    expect(data.sources[2]!.media).toMatchInlineSnapshot(`""`)
     // Should have a height that is calculated from the aspect ratio.
-    expect(data.sources[2].height).toEqual('938')
+    expect(data.sources[2]!.height).toEqual('938')
     // Should have a width because one is set explicitly.
-    expect(data.sources[2].width).toEqual('375')
+    expect(data.sources[2]!.width).toEqual('375')
   })
 
   it('renders the preload links for picture sources', async () => {
@@ -128,17 +132,17 @@ describe('The <RokkaImage> component for pictures', async () => {
     const data = await buildPictureData(page, 'pictures')
 
     // Viewport XL defines both a width and height. Any aspect ratio is ignored.
-    expect(data.sources[0].width).toEqual('1000')
-    expect(data.sources[0].height).toEqual('1000')
+    expect(data.sources[0]!.width).toEqual('1000')
+    expect(data.sources[0]!.height).toEqual('1000')
 
     // Viewport LG defines only a width.
-    expect(data.sources[1].width).toEqual('1000')
+    expect(data.sources[1]!.width).toEqual('1000')
     // Neither a height nor an aspect ratio is defined for the viewport. It inherits the root aspect ratio.
-    expect(data.sources[1].height).toEqual('500') // Root aspect ratio: 2 / 1 = 1000 * 0.5 = 500
+    expect(data.sources[1]!.height).toEqual('500') // Root aspect ratio: 2 / 1 = 1000 * 0.5 = 500
 
     // Viewport SM defines a width.
-    expect(data.sources[2].width).toEqual('400')
+    expect(data.sources[2]!.width).toEqual('400')
     // A width is defined and it overrides the root aspect ratio.
-    expect(data.sources[2].height).toEqual('300') // Aspect ratio: 4 / 3 = 400 * 0.75 = 300
+    expect(data.sources[2]!.height).toEqual('300') // Aspect ratio: 4 / 3 = 400 * 0.75 = 300
   })
 })

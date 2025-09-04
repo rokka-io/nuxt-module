@@ -5,7 +5,7 @@ function parseSrcset(srcset?: string | null): { url: string; dpi: string }[] {
     return []
   }
   return srcset.split(', ').map((v) => {
-    const [url, dpi] = v.split(' ')
+    const [url, dpi] = v.split(' ') as [string, string]
     return {
       url,
       dpi,

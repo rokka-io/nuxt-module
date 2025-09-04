@@ -1,4 +1,5 @@
 import { fileURLToPath } from 'node:url'
+import { name, version } from '../package.json'
 import {
   createResolver,
   defineNuxtModule,
@@ -48,11 +49,11 @@ export type ModuleOptions = {
 
 export default defineNuxtModule<ModuleOptions>({
   meta: {
-    name: '@rokka-io/nuxt',
+    name,
     configKey: 'rokka',
-    version: '1.0.0',
+    version,
     compatibility: {
-      nuxt: '^3.8.0',
+      nuxt: '>=3.8.0',
     },
   },
   defaults: {

@@ -27,4 +27,6 @@ export default defineNuxtConfig({
       crop: 'fe_nuxt_crop_copy',
     },
   },
+
+  compatibilityDate: '2025-09-04',
 })
