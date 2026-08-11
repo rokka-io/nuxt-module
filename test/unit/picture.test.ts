@@ -251,11 +251,7 @@ describe('getPreloadLinks', () => {
     ])
   })
 
-  // --- Known bugs. These describe the behaviour we want, and are expected to
-  // --- fail until the preload logic is fixed. Once fixed, vitest reports them
-  // --- as "expected to fail, but passed" so the .fails marker gets removed.
-
-  it.fails('preloads every source, including media-query ones', () => {
+  it('preloads every source, including media-query ones', () => {
     const sources = [
       source({ width: 400, media: '(min-width: 1280px)' }),
       source({ width: 200, media: '(min-height: 600px)' }),
@@ -264,7 +260,7 @@ describe('getPreloadLinks', () => {
     expect(getPreloadLinks(sources)).toHaveLength(2)
   })
 
-  it.fails('preloads the fallback source', () => {
+  it('preloads the fallback source', () => {
     const sources = [
       source({ width: 400, viewport: 'md', minWidth: 1024 }),
       source({ width: 300, viewport: 'sm', minWidth: 768 }),
@@ -276,13 +272,49 @@ describe('getPreloadLinks', () => {
     )
   })
 
-  it.fails('preloads exactly one image for any given viewport width', () => {
+  it('preloads exactly one image for any given viewport width', () => {
     const links = getPreloadLinks(threeViewportSources())
 
     for (const width of [400, 800, 1300, 1700]) {
       const matching = links.filter((v) => matchesWidth(v.media, width))
       expect(matching, `at ${width}px`).toHaveLength(1)
     }
+  })
+
+  it('stops at a source without a media query', () => {
+    const sources = [
+      source({ width: 400, viewport: 'md', minWidth: 1024 }),
+      source({ width: 200, viewport: 'fallback', minWidth: 0 }),
+      // Unreachable: the fallback above always matches.
+      source({ width: 100, viewport: 'sm', minWidth: 768 }),
+    ]
+
+    expect(getPreloadLinks(sources).map((v) => v.imagesrcset)).toEqual([
+      'w-400 1x',
+      'w-200 1x',
+    ])
+  })
+
+  it('collapses min-width exclusions into a single max-width', () => {
+    expect(getPreloadLinks(threeViewportSources()).map((v) => v.media)).toEqual(
+      [
+        '(min-width: 1680px)',
+        '(min-width: 1280px) and (max-width: 1679px)',
+        '(max-width: 1279px)',
+      ],
+    )
+  })
+
+  it('falls back to `not` when a preceding query is not a min-width', () => {
+    const sources = [
+      source({ width: 200, media: '(min-height: 600px)' }),
+      source({ width: 400, media: '(min-width: 1280px)' }),
+    ]
+
+    expect(getPreloadLinks(sources).map((v) => v.media)).toEqual([
+      '(min-height: 600px)',
+      '(min-width: 1280px) and (not (min-height: 600px))',
+    ])
   })
 
   // Guards the test above: a .fails test would silently keep passing if
@@ -344,7 +376,7 @@ function matchesWidth(media: string | undefined, width: number): boolean {
   }
 
   return splitTopLevelAnd(media).every((part) => {
-    const not = part.match(/^\(\s*not\s+(.*)\)$/)
+    const not = part.match(/^\(not (.+)\)$/)
     if (not) {
       return !matchesWidth(not[1]!.trim(), width)
     }

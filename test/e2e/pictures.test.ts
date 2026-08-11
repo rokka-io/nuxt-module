@@ -71,18 +71,18 @@ describe('The <RokkaImage> component for pictures', async () => {
           "imagesrcset": [
             {
               "dpi": "1x",
-              "url": "https://rokka-demos.rokka.io/STACK_CROP/variables-w-375-h-938/HASH/image.jpg",
+              "url": "https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-1680/HASH/image.jpg",
             },
             {
               "dpi": "1.5x",
-              "url": "https://rokka-demos.rokka.io/STACK_CROP/variables-w-375-h-938--options-dpr-1.5/HASH/image.jpg",
+              "url": "https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-1680--options-dpr-1.5/HASH/image.jpg",
             },
             {
               "dpi": "2x",
-              "url": "https://rokka-demos.rokka.io/STACK_CROP/variables-w-375-h-938--options-dpr-2/HASH/image.jpg",
+              "url": "https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-1680--options-dpr-2/HASH/image.jpg",
             },
           ],
-          "media": "(max-width: 1279px)",
+          "media": "(min-width: 1680px)",
           "rel": "preload",
         },
         {
@@ -101,7 +101,7 @@ describe('The <RokkaImage> component for pictures', async () => {
               "url": "https://rokka-demos.rokka.io/STACK_CROP/variables-w-1024-h-300--options-dpr-2/HASH/image.jpg",
             },
           ],
-          "media": "(min-width: 1280px)",
+          "media": "(min-width: 1280px) and (max-width: 1679px)",
           "rel": "preload",
         },
         {
@@ -109,22 +109,47 @@ describe('The <RokkaImage> component for pictures', async () => {
           "imagesrcset": [
             {
               "dpi": "1x",
-              "url": "https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-1680/HASH/image.jpg",
+              "url": "https://rokka-demos.rokka.io/STACK_CROP/variables-w-375-h-938/HASH/image.jpg",
             },
             {
               "dpi": "1.5x",
-              "url": "https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-1680--options-dpr-1.5/HASH/image.jpg",
+              "url": "https://rokka-demos.rokka.io/STACK_CROP/variables-w-375-h-938--options-dpr-1.5/HASH/image.jpg",
             },
             {
               "dpi": "2x",
-              "url": "https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-1680--options-dpr-2/HASH/image.jpg",
+              "url": "https://rokka-demos.rokka.io/STACK_CROP/variables-w-375-h-938--options-dpr-2/HASH/image.jpg",
             },
           ],
-          "media": "(min-width: 1680px)",
+          "media": "(max-width: 1279px)",
           "rel": "preload",
         },
       ]
     `)
+  })
+
+  it('renders preload links for media queries and the fallback source', async () => {
+    const page = await createPage('/pictures-preload-media')
+
+    const links = await getPreloadLinks(page)
+
+    // One link per source, with mutually exclusive media queries so that the
+    // browser preloads exactly the image <picture> ends up rendering.
+    expect(
+      links.map((v) => ({ media: v.media, url: v.imagesrcset[0]!.url })),
+    ).toEqual([
+      {
+        media: '(min-width: 1280px)',
+        url: 'https://rokka-demos.rokka.io/STACK_CROP/variables-w-1024-h-300/HASH/image.jpg',
+      },
+      {
+        media: '(min-width: 600px) and (max-width: 1279px)',
+        url: 'https://rokka-demos.rokka.io/STACK_CROP/variables-w-600-h-300/HASH/image.jpg',
+      },
+      {
+        media: '(max-width: 599px)',
+        url: 'https://rokka-demos.rokka.io/STACK_CROP/variables-w-300-h-300/HASH/image.jpg',
+      },
+    ])
   })
 
   it('calculates the height using aspect ratios', async () => {

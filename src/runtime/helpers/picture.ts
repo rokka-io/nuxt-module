@@ -218,20 +218,96 @@ export function getFallbackSource(
   )
 }
 
+const MIN_WIDTH_QUERY = /^\(min-width: (\d+)px\)$/
+
+/**
+ * Combine a source's own media query with the exclusion of every query that
+ * comes before it.
+ *
+ * <picture> picks the first matching <source>, but every matching preload link
+ * is fetched, so the links have to be made mutually exclusive by hand.
+ *
+ * When all preceding queries are a plain min-width - which is the case for
+ * every viewport based config - the exclusion collapses into a single
+ * max-width. That keeps the output readable and avoids the Media Queries
+ * level 4 `not` syntax, which older browsers treat as an invalid query.
+ */
+function excludePreceding(
+  own: string | undefined,
+  preceding: string[],
+): string | undefined {
+  if (!preceding.length) {
+    return own
+  }
+
+  const maxWidth = collapsibleMaxWidth(preceding)
+  const conditions =
+    maxWidth === undefined
+      ? preceding.map((v) => `(not ${v})`)
+      : [`(max-width: ${maxWidth}px)`]
+
+  return (own ? [own, ...conditions] : conditions).join(' and ')
+}
+
+/**
+ * Parse '(min-width: 768px)' into 768. Returns undefined for anything else.
+ */
+function parseMinWidth(media: string): number | undefined {
+  const match = media.match(MIN_WIDTH_QUERY)
+  return match ? Number(match[1]) : undefined
+}
+
+/**
+ * The single max-width that excludes all of the given queries, or undefined
+ * if they can not be expressed that way.
+ *
+ * Excluding a set of min-width queries means staying below the smallest of
+ * them, so they collapse into one max-width.
+ */
+function collapsibleMaxWidth(preceding: string[]): number | undefined {
+  const minWidths: number[] = []
+
+  for (const media of preceding) {
+    const minWidth = parseMinWidth(media)
+
+    // A query that is not a plain min-width, or one that always matches,
+    // can not be turned into a max-width.
+    if (minWidth === undefined || minWidth <= 0) {
+      return undefined
+    }
+
+    minWidths.push(minWidth)
+  }
+
+  return Math.min(...minWidths) - 1
+}
+
 /**
  * Build the preload links for the given sources.
+ *
+ * One link per source, in the same order as the <source> elements, with
+ * mutually exclusive media queries so that the browser preloads exactly the
+ * image that <picture> will end up rendering.
  */
 export function getPreloadLinks(sources: PictureSource[]): PreloadLink[] {
-  return getSourcesWithMinWidthSorted(sources).map((source, index, self) => {
-    const next = self[index + 1]
-    return {
+  const links: PreloadLink[] = []
+  const preceding: string[] = []
+
+  for (const source of sources) {
+    links.push({
       rel: 'preload',
       as: 'image',
       imagesrcset: source.srcset,
-      media:
-        index === 0 && next
-          ? `(max-width: ${next.minWidth - 1}px)`
-          : source.media,
+      media: excludePreceding(source.media, preceding),
+    })
+
+    // A source without a media query always matches, so no later source can.
+    if (!source.media) {
+      break
     }
-  })
+
+    preceding.push(source.media)
+  }
+
+  return links
 }
