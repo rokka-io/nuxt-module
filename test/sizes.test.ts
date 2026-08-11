@@ -127,8 +127,8 @@ describe('The <RokkaImage> component for sizes', async () => {
     const img = await buildSizesData(page, 'sizes')
 
     expect(img.sizes).toHaveLength(5)
-    expect(img.sizes[4].mediaQuery).toBeFalsy()
-    expect(img.sizes[4].width).toEqual('200px')
+    expect(img.sizes[4]!.mediaQuery).toBeFalsy()
+    expect(img.sizes[4]!.width).toEqual('200px')
     expect(img.src).toMatchInlineSnapshot(
       `"https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-200/HASH/image.jpg"`,
     )
