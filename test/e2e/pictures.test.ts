@@ -144,6 +144,12 @@ describe('The <RokkaImage> component for pictures', async () => {
     expect(data.sources[2]!.width).toEqual('400')
     // A width is defined and it overrides the root aspect ratio.
     expect(data.sources[2]!.height).toEqual('300') // Aspect ratio: 4 / 3 = 400 * 0.75 = 300
+
+    // The root aspect ratio must also apply to the generated URL, not just to
+    // the width/height attributes: an entry that only defines a width is
+    // cropped using the root aspect ratio.
+    expect(data.sources[1]!.srcsets[0]!.url).toContain('STACK_CROP')
+    expect(data.sources[1]!.srcsets[0]!.url).toContain('variables-w-1000-h-500')
   })
 
   it('sorts the viewports in object syntax', async () => {

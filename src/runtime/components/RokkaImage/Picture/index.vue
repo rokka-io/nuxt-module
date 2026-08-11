@@ -19,7 +19,15 @@
 </template>
 
 <script lang="ts" setup>
-import { VIEWPORTS, DPR, type Viewport } from '#rokka/generated-types'
+import {
+  getPictureConfigs,
+  getWidth,
+  getHeight,
+  getFallbackSource,
+  getPreloadLinks,
+  type PictureSource,
+} from './../../../helpers/picture'
+import { VIEWPORTS, DPR } from '#rokka/generated-types'
 import type {
   DefineImageStyleConfigPictures,
   BuildRokkaUrlVariables,
@@ -99,69 +107,6 @@ const props = defineProps<{
   preload?: boolean
 }>()
 
-type PictureConfig = {
-  viewport?: Viewport
-  media?: string
-  width?: number
-  height?: number
-  aspectRatio?: number
-  minWidth?: number
-}
-
-function getMediaQueryFromViewport(viewport?: Viewport): string | undefined {
-  if (!viewport) {
-    return
-  }
-  const minWidth: number | undefined = VIEWPORTS[viewport]
-
-  if (minWidth) {
-    return `(min-width: ${minWidth}px)`
-  }
-}
-
-function getPictureConfigs(): PictureConfig[] {
-  // User provided an array.
-  if (Array.isArray(props.config.pictures)) {
-    return props.config.pictures.map((v) => {
-      const media = v.media || getMediaQueryFromViewport(v.viewport)
-      return {
-        viewport: v.viewport,
-        media,
-        width: 'width' in v ? v.width : undefined,
-        height: v.height,
-        aspectRatio: v.aspectRatio || props.config.aspectRatio,
-        minWidth: v.viewport ? VIEWPORTS[v.viewport] : undefined,
-      }
-    })
-  }
-
-  // User provided an object. Convert it to an array.
-  return Object.entries(props.config.pictures)
-    .map(([key, config]) => {
-      const viewport = key as Viewport
-      return {
-        viewport,
-        ...config,
-        aspectRatio: config.aspectRatio || props.config.aspectRatio,
-        minWidth: VIEWPORTS[viewport],
-        media: getMediaQueryFromViewport(viewport),
-      }
-    })
-    .sort((a, b) => {
-      return b.minWidth - a.minWidth
-    })
-    .map((item, index, arr) => {
-      // The last one should not have a media query.
-      if (index === arr.length - 1) {
-        return {
-          ...item,
-          media: undefined,
-        }
-      }
-      return item
-    })
-}
-
 const buildUrl = (width: number, height?: number, dpr?: string) => {
   const variables: BuildRokkaUrlVariables = {
     w: width,
@@ -185,55 +130,19 @@ const buildUrl = (width: number, height?: number, dpr?: string) => {
   )
 }
 
-function getWidth(spec: PictureConfig): number | undefined {
-  if (spec.width) {
-    // Width is provided explicitly.
-    return spec.width
-  } else if (spec.height && spec.aspectRatio) {
-    // Height and aspect ratio is provided.
-    return Math.round(spec.height * spec.aspectRatio)
-  } else if (spec.viewport) {
-    // Viewport available.
-    return VIEWPORTS[spec.viewport]
-  } else if (props.sourceWidth) {
-    return props.sourceWidth
-  }
-}
-
-function getHeight(spec: PictureConfig): number | undefined {
-  if (spec.height) {
-    // Height has been provided explicitly.
-    return spec.height
-  } else if (spec.width && spec.aspectRatio) {
-    // Width and aspect ratio provided. We can calculate the height.
-    return Math.round(spec.width / spec.aspectRatio)
-  } else if (spec.viewport && spec.aspectRatio) {
-    // Neither width nor height provided. Use the min-width of the breakpoint to calculate the height.
-    // Use the breakpoint of the viewport as the width.
-    const minWidth = VIEWPORTS[spec.viewport]
-    return Math.round(minWidth * spec.aspectRatio)
-  }
-}
-
-function notNullish<T = any>(val?: T | null | undefined): val is T {
+function notNullish<T>(val?: T | null | undefined): val is T {
   return val != null
 }
 
-type Source = {
-  srcset: string
-  srcsetItems: [string, string][]
-  width: number
-  height?: number
-  media?: string
-  viewport?: Viewport
-  minWidth?: number
-}
-
-const sources = computed<Source[]>(() => {
-  return getPictureConfigs()
+const sources = computed<PictureSource[]>(() => {
+  return getPictureConfigs(
+    props.config.pictures,
+    VIEWPORTS,
+    props.config.aspectRatio,
+  )
     .map((spec) => {
-      const width = getWidth(spec)
-      const height = getHeight(spec)
+      const width = getWidth(spec, VIEWPORTS, props.sourceWidth)
+      const height = getHeight(spec, VIEWPORTS)
       if (!width) {
         console.error(
           'Invalid image style config. The config must define either a width or height to determine the image width.',
@@ -263,30 +172,8 @@ const sources = computed<Source[]>(() => {
     .filter(notNullish)
 })
 
-const sourcesWithMinWidthSorted = computed(() => {
-  return sources.value
-    .map((v) => {
-      if (!v.minWidth) {
-        return null
-      }
-
-      return {
-        ...v,
-        minWidth: v.minWidth,
-      }
-    })
-    .filter(notNullish)
-    .sort((a, b) => a.minWidth - b.minWidth)
-})
-
 const fallback = computed(() => {
-  // use explicitly defined fallback image
-  // OR if we have minWidths the one with the lowest minWidth (usually the case if we use viewports)
-  // OR the last one (for media queries this is generlly the fallthrough / fallback one)
-  const source =
-    sources.value.find((v) => v.viewport === 'fallback') ||
-    sourcesWithMinWidthSorted.value[0] ||
-    sources.value[sources.value.length - 1]
+  const source = getFallbackSource(sources.value)
 
   if (!source) {
     return
@@ -305,18 +192,7 @@ const fallback = computed(() => {
 
 if (props.preload && import.meta.server) {
   useServerHead({
-    link: [...sourcesWithMinWidthSorted.value].map((source, index, self) => {
-      const next = self[index + 1]
-      return {
-        rel: 'preload',
-        as: 'image',
-        imagesrcset: source.srcset,
-        media:
-          index === 0 && next
-            ? `(max-width: ${next.minWidth - 1}px)`
-            : source.media,
-      }
-    }),
+    link: getPreloadLinks(sources.value),
   })
 }
 </script>
