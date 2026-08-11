@@ -2,7 +2,6 @@ import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import { setup, createPage } from '@nuxt/test-utils/e2e'
 import { buildSizesData } from './helpers'
-import exp from 'node:constants'
 
 describe('The <RokkaImage> component for sizes', async () => {
   await setup({
