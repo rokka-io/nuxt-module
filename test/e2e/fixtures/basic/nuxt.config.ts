@@ -1,4 +1,4 @@
-import RokkaNuxt from '../../../src/module'
+import RokkaNuxt from '../../../../src/module'
 
 export default defineNuxtConfig({
   modules: [RokkaNuxt],
