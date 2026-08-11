@@ -120,4 +120,16 @@ describe('The <RokkaImage> component for sizes', async () => {
       expect(srcset.url).toContain('STACK_NO_CROP')
     })
   })
+
+  it('uses the special fallback viewport if provided', async () => {
+    const page = await createPage('/sizes-fallback')
+    const img = await buildSizesData(page, 'sizes')
+
+    expect(img.sizes).toHaveLength(5)
+    expect(img.sizes[4]!.mediaQuery).toBeFalsy()
+    expect(img.sizes[4]!.width).toEqual('200px')
+    expect(img.src).toMatchInlineSnapshot(
+      `"https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-200/HASH/image.jpg"`,
+    )
+  })
 })
