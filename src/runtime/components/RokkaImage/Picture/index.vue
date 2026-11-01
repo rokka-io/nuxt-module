@@ -32,12 +32,7 @@ import type {
   DefineImageStyleConfigPictures,
   BuildRokkaUrlVariables,
 } from '#rokka/types'
-import {
-  buildRokkaUrl,
-  computed,
-  useRuntimeConfig,
-  useServerHead,
-} from '#imports'
+import { buildRokkaUrl, computed, useRuntimeConfig, useHead } from '#imports'
 
 const runtimeConfig = useRuntimeConfig()
 
@@ -191,7 +186,7 @@ const fallback = computed(() => {
 })
 
 if (props.preload && import.meta.server) {
-  useServerHead({
+  useHead({
     link: getPreloadLinks(sources.value),
   })
 }

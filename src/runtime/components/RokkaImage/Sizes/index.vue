@@ -9,12 +9,7 @@ import type {
   BuildRokkaUrlVariables,
   DefineImageStyleConfigSizes,
 } from '#rokka/types'
-import {
-  useRuntimeConfig,
-  buildRokkaUrl,
-  useServerHead,
-  computed,
-} from '#imports'
+import { useRuntimeConfig, buildRokkaUrl, useHead, computed } from '#imports'
 
 const runtimeConfig = useRuntimeConfig()
 
@@ -135,7 +130,7 @@ const srcset = computed(() =>
 )
 
 if (props.preload && import.meta.server) {
-  useServerHead({
+  useHead({
     link: [
       {
         rel: 'preload',
