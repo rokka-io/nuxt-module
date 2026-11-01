@@ -1,7 +1,25 @@
 import type {
   DefineImageStyleConfigSingle,
   DefineImageStyleConfigSizes,
+  RokkaImageSource,
 } from '../types'
+
+/**
+ * The segment of a rokka URL that identifies the source image.
+ *
+ * A hash is used as is. A remote image goes between two dashes, which is how
+ * rokka tells it apart from a hash. It is URL encoded, so that a query string
+ * or the double slash after the protocol stay part of the segment.
+ */
+export function getSourcePath(source: string | RokkaImageSource): string {
+  if (typeof source === 'string') {
+    return source
+  }
+  if ('remote' in source) {
+    return '-' + encodeURIComponent(source.remote) + '-'
+  }
+  return source.hash
+}
 
 /**
  * Calculates the width and height attributes for images so that <img>

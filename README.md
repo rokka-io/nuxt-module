@@ -36,14 +36,45 @@ You can find example stack configurations in the ./stacks folder.
 
 ## Render an image
 
-Use the `<RokkaImage>` component to render a single rokka image. The `hash` and
-`config` props are required.
+Use the `<RokkaImage>` component to render a single rokka image. The `config`
+prop is required, and either `hash` or `remote`.
 
 ```vue
 <template>
   <RokkaImage hash="90b93a" :config="imageStyle" />
 </template>
 ```
+
+### Remote images
+
+rokka can also render an image that is not stored in rokka, but loaded from
+another server. Pass its URL to the `remote` prop instead of a hash. Every image
+style works the same way.
+
+```vue
+<template>
+  <RokkaImage
+    v-if="!failed"
+    remote="https://example.com/images/event.jpg"
+    :config="imageStyle"
+    @error="failed = true"
+  />
+  <PlaceholderIcon v-else />
+</template>
+```
+
+The remote server has to be allowed in rokka, with the `remote_fullurl_allow`
+and `remote_fullurl_whitelist` options of the organization or the stack. With
+the `remote_basepath` option instead, pass the path below the base path, for
+example `remote="2017/06/image.jpg"`. See
+[Loading images from a remote URL](https://rokka.io/documentation/references/stacks.html#loading-images-from-a-remote-url).
+
+rokka loads a remote image only once and does not check it for changes later.
+When the image changes, it needs a new URL.
+
+The `error` event fires when the image can not be loaded, for example when rokka
+can not load the remote image. It also fires for an image that failed before the
+page was hydrated.
 
 ## Define image styles
 
