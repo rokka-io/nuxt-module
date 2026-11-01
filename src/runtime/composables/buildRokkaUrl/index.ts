@@ -1,10 +1,17 @@
-import type { BuildRokkaUrlVariables } from './../../types'
+import type { BuildRokkaUrlVariables, RokkaImageSource } from './../../types'
+import { getSourcePath } from './../../helpers'
 import { useRuntimeConfig } from '#imports'
 
+/**
+ * Build the URL of a rendered rokka image.
+ *
+ * The source is either the hash of an image stored in rokka, or an object
+ * with the hash or the URL of a remote image: `{ remote: 'https://…' }`.
+ */
 export function buildRokkaUrl(
   stack: string,
   dpr = '',
-  hash = '',
+  source: string | RokkaImageSource = '',
   name?: string,
   overrideHost?: string,
   variables?: BuildRokkaUrlVariables,
@@ -23,7 +30,7 @@ export function buildRokkaUrl(
     modifierParts.push('options-dpr-' + dpr)
   }
   parts.push(modifierParts.join('--'))
-  parts.push(hash)
+  parts.push(getSourcePath(source))
   parts.push(encodeURIComponent((name || 'image.jpg').replace('.pdf', '.jpg')))
   return 'https://' + parts.join('/')
 }

@@ -1,5 +1,10 @@
 <template>
-  <img v-if="src" :src="src" v-bind="imageAttributes" />
+  <img
+    v-if="src"
+    :src="src"
+    v-bind="imageAttributes"
+    @error="emit('error', $event)"
+  />
 </template>
 
 <script lang="ts" setup>
@@ -7,6 +12,7 @@ import { getImageAttributes } from './../../../helpers'
 import type {
   BuildRokkaUrlVariables,
   DefineImageStyleConfigSingle,
+  RokkaImageSource,
 } from '#rokka/types'
 import { useRuntimeConfig, buildRokkaUrl, computed } from '#imports'
 
@@ -14,9 +20,9 @@ const runtimeConfig = useRuntimeConfig()
 
 const props = defineProps<{
   /**
-   * The rokka hash.
+   * The image to render: a rokka hash or a remote image.
    */
-  hash: string
+  source: RokkaImageSource
 
   /**
    * Configure what and how the image should be rendered.
@@ -58,12 +64,16 @@ const props = defineProps<{
   preload?: boolean
 }>()
 
+const emit = defineEmits<{
+  error: [event: Event]
+}>()
+
 const src = computed(() => {
   if (typeof props.config === 'string') {
     return buildRokkaUrl(
       props.config,
       '',
-      props.hash,
+      props.source,
       props.fileName,
       props.host,
     )
@@ -87,7 +97,7 @@ const src = computed(() => {
   return buildRokkaUrl(
     stack,
     '',
-    props.hash,
+    props.source,
     props.fileName,
     props.host,
     variables,

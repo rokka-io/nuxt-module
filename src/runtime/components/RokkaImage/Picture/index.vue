@@ -1,12 +1,12 @@
 <template>
   <picture v-if="fallback">
     <source
-      v-for="(source, index) in sources"
+      v-for="(item, index) in sources"
       :key="index"
-      :srcset="source.srcset"
-      :media="source.media"
-      :width="source.width"
-      :height="source.height"
+      :srcset="item.srcset"
+      :media="item.media"
+      :width="item.width"
+      :height="item.height"
     />
     <img
       :alt="alt"
@@ -14,6 +14,7 @@
       :src="fallback.src"
       :loading="loading"
       :class="imgClass"
+      @error="emit('error', $event)"
     />
   </picture>
 </template>
@@ -31,6 +32,7 @@ import { VIEWPORTS, DPR } from '#rokka/generated-types'
 import type {
   DefineImageStyleConfigPictures,
   BuildRokkaUrlVariables,
+  RokkaImageSource,
 } from '#rokka/types'
 import { buildRokkaUrl, computed, useRuntimeConfig, useHead } from '#imports'
 
@@ -38,9 +40,9 @@ const runtimeConfig = useRuntimeConfig()
 
 const props = defineProps<{
   /**
-   * The rokka hash.
+   * The image to render: a rokka hash or a remote image.
    */
-  hash: string
+  source: RokkaImageSource
 
   /**
    * Configure what and how the image should be rendered.
@@ -102,6 +104,10 @@ const props = defineProps<{
   preload?: boolean
 }>()
 
+const emit = defineEmits<{
+  error: [event: Event]
+}>()
+
 const buildUrl = (width: number, height?: number, dpr?: string) => {
   const variables: BuildRokkaUrlVariables = {
     w: width,
@@ -118,7 +124,7 @@ const buildUrl = (width: number, height?: number, dpr?: string) => {
   return buildRokkaUrl(
     stack,
     dpr,
-    props.hash,
+    props.source,
     props.fileName,
     props.host,
     variables,

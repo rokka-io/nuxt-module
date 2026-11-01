@@ -137,6 +137,24 @@ export type DefineImageStyleConfig =
   | DefineImageStyleConfigSizes
   | DefineImageStyleConfigPictures
 
+/**
+ * The image rokka renders: either an image stored in rokka, identified by its
+ * hash, or a remote image that rokka loads from elsewhere.
+ */
+export type RokkaImageSource =
+  | {
+      hash: string
+    }
+  | {
+      /**
+       * The full URL of the remote image, or its path below the base path
+       * when the organization uses `remote_basepath`. A full URL needs the
+       * `remote_fullurl_allow` option, and its host must be allowed by
+       * `remote_fullurl_whitelist`.
+       */
+      remote: string
+    }
+
 export type BuildRokkaUrlVariables = {
   w: string | number
   h?: string | number
