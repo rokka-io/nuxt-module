@@ -19,18 +19,20 @@
 </template>
 
 <script lang="ts" setup>
-import { VIEWPORTS, DPR, type Viewport } from '#rokka/generated-types'
+import {
+  getPictureConfigs,
+  getWidth,
+  getHeight,
+  getFallbackSource,
+  getPreloadLinks,
+  type PictureSource,
+} from './../../../helpers/picture'
+import { VIEWPORTS, DPR } from '#rokka/generated-types'
 import type {
   DefineImageStyleConfigPictures,
-  DefineImageStyleConfigPicturesViewport,
   BuildRokkaUrlVariables,
 } from '#rokka/types'
-import {
-  buildRokkaUrl,
-  computed,
-  useRuntimeConfig,
-  useServerHead,
-} from '#imports'
+import { buildRokkaUrl, computed, useRuntimeConfig, useHead } from '#imports'
 
 const runtimeConfig = useRuntimeConfig()
 
@@ -100,29 +102,17 @@ const props = defineProps<{
   preload?: boolean
 }>()
 
-const smallestViewport = computed(
-  () => Object.keys(props.config.pictures)[0] as Viewport,
-)
-
-const buildUrl = (
-  spec: DefineImageStyleConfigPicturesViewport,
-  dpr?: string,
-) => {
+const buildUrl = (width: number, height?: number, dpr?: string) => {
   const variables: BuildRokkaUrlVariables = {
-    w: spec.width,
-    h: undefined,
+    w: width,
+    h: height,
   }
-  let height = spec.height
-  let stack: string =
+
+  let stack =
     props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop
 
-  if (!height && spec.aspectRatio) {
-    height = Math.round(spec.width / spec.aspectRatio)
-  }
-
-  if (height) {
+  if (variables.h) {
     stack = props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
-    variables.h = height
   }
 
   return buildRokkaUrl(
@@ -135,15 +125,28 @@ const buildUrl = (
   )
 }
 
-const sources = computed(() =>
-  Object.entries(props.config.pictures)
-    .map(([viewport, spec]) => {
-      const minWidth = VIEWPORTS[viewport as Viewport]
-      const media =
-        viewport !== smallestViewport.value ? `(min-width: ${minWidth}px)` : ''
+function notNullish<T>(val?: T | null | undefined): val is T {
+  return val != null
+}
 
-      const srcsetItems = DPR.map((v) => {
-        const url = buildUrl(spec, v)
+const sources = computed<PictureSource[]>(() => {
+  return getPictureConfigs(
+    props.config.pictures,
+    VIEWPORTS,
+    props.config.aspectRatio,
+  )
+    .map((spec) => {
+      const width = getWidth(spec, VIEWPORTS, props.sourceWidth)
+      const height = getHeight(spec, VIEWPORTS)
+      if (!width) {
+        console.error(
+          'Invalid image style config. The config must define either a width or height to determine the image width.',
+          props.config,
+        )
+        return null
+      }
+      const srcsetItems: [string, string][] = DPR.map((v) => {
+        const url = buildUrl(width, height, v)
         const pixelRatio = v || '1'
 
         return [url, pixelRatio + 'x']
@@ -151,57 +154,40 @@ const sources = computed(() =>
 
       const srcset = srcsetItems.map((v) => v.join(' ')).join(', ')
 
-      // Calculate the width and height for each source.
-      // That way we can prevent layout shift because the browser can already
-      // reserve space needed for each image source.
-      const aspectRatio = spec.aspectRatio || props.config.aspectRatio
-      let height = spec.height
-      if (!height) {
-        if (aspectRatio) {
-          height = Math.round(spec.width / aspectRatio)
-        }
+      return {
+        srcset,
+        srcsetItems,
+        width,
+        height,
+        media: spec.media,
+        viewport: spec.viewport,
+        minWidth: spec.minWidth,
       }
-
-      return { srcset, media, minWidth, width: spec.width, height, srcsetItems }
     })
-    .sort((a, b) => {
-      return b.minWidth - a.minWidth
-    }),
-)
+    .filter(notNullish)
+})
 
 const fallback = computed(() => {
-  const smallest = sources.value[sources.value.length - 1]
-  if (!smallest) {
+  const source = getFallbackSource(sources.value)
+
+  if (!source) {
     return
   }
-  const fallbackUrl = smallest.srcsetItems[0]?.[0]
+  const fallbackUrl = source.srcsetItems[0]?.[0]
   if (!fallbackUrl) {
     return
   }
 
   return {
     src: fallbackUrl,
-    width: smallest.width,
-    height: smallest.height,
+    width: source.width,
+    height: source.height,
   }
 })
 
 if (props.preload && import.meta.server) {
-  useServerHead({
-    link: [...sources.value]
-      .sort((a, b) => a.minWidth - b.minWidth)
-      .map((source, index, self) => {
-        const next = self[index + 1]
-        return {
-          rel: 'preload',
-          as: 'image',
-          imagesrcset: source.srcset,
-          media:
-            index === 0 && next
-              ? `(max-width: ${next.minWidth - 1}px)`
-              : source.media,
-        }
-      }),
+  useHead({
+    link: getPreloadLinks(sources.value),
   })
 }
 </script>

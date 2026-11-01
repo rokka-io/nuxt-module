@@ -114,7 +114,6 @@ const imageStyleSizesNoCrop = defineImageStyle({
 
 const imageStylePicturesNoCrop = defineImageStyle({
   type: 'pictures',
-  aspectRatio: 16 / 9,
   pictures: {
     sm: {
       width: 375,
