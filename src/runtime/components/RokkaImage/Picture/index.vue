@@ -171,11 +171,11 @@ const fallback = computed(() => {
   const source = getFallbackSource(sources.value)
 
   if (!source) {
-    return
+    return null
   }
   const fallbackUrl = source.srcsetItems[0]?.[0]
   if (!fallbackUrl) {
-    return
+    return null
   }
 
   return {
