@@ -6,6 +6,7 @@ import {
   getHeight,
   getFallbackSource,
   getPreloadLinks,
+  type PictureConfig,
   type PictureSource,
 } from '../../src/runtime/helpers/picture'
 
@@ -39,6 +40,20 @@ function source(v: Partial<PictureSource> & { width: number }): PictureSource {
     ...v,
     media,
   }
+}
+
+/**
+ * Turn normalised configs into sources, keeping their media queries as is.
+ */
+function toSources(configs: PictureConfig[]): PictureSource[] {
+  return configs.map((config) =>
+    source({
+      width: config.width ?? 0,
+      viewport: config.viewport,
+      minWidth: config.minWidth,
+      media: config.media,
+    }),
+  )
 }
 
 describe('getMediaQueryFromViewport', () => {
@@ -184,6 +199,14 @@ describe('getHeight', () => {
     expect(getHeight({ width: 400 }, VIEWPORTS)).toBeUndefined()
   })
 
+  it('derives the height from the viewport min-width and aspect ratio', () => {
+    const spec = { viewport: 'md', aspectRatio: 16 / 9 }
+
+    // Same proportions as getWidth(), which falls back to the min-width.
+    expect(getWidth(spec, VIEWPORTS)).toBe(1024)
+    expect(getHeight(spec, VIEWPORTS)).toBe(576)
+  })
+
   // This is the behaviour change versus v1: previously a root-level
   // aspectRatio only affected the width/height attributes, while the
   // generated URL stayed uncropped. Producing a height here is what makes
@@ -210,7 +233,37 @@ describe('getFallbackSource', () => {
     expect(getFallbackSource(sources)?.width).toBe(200)
   })
 
-  it('uses the lowest min-width when there is no fallback viewport', () => {
+  it('uses the smallest viewport when its min-width is 0', () => {
+    // The default viewports of the module.
+    const viewports = { fallback: 0, sm: 0, md: 768, lg: 1024 }
+    const sources = toSources(
+      getPictureConfigs(
+        { sm: { width: 300 }, md: { width: 700 }, lg: { width: 1000 } },
+        viewports,
+      ),
+    )
+
+    expect(getFallbackSource(sources)?.width).toBe(300)
+  })
+
+  it('uses an entry with an empty media query', () => {
+    // The array example from the README.
+    const sources = toSources(
+      getPictureConfigs(
+        [
+          { media: '(min-height: 1200px)', width: 500, height: 500 },
+          { media: '(min-height: 600px)', width: 200, aspectRatio: 4 / 3 },
+          { viewport: 'md', width: 100 },
+          { media: '', width: 2000 },
+        ],
+        VIEWPORTS,
+      ),
+    )
+
+    expect(getFallbackSource(sources)?.width).toBe(2000)
+  })
+
+  it('uses the lowest min-width when every source has a media query', () => {
     const sources = [
       source({ width: 400, viewport: 'md', minWidth: 1024 }),
       source({ width: 300, viewport: 'sm', minWidth: 768 }),

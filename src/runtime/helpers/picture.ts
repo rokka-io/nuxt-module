@@ -183,7 +183,7 @@ export function getHeight(
     // Neither width nor height provided. Use the min-width of the breakpoint
     // to calculate the height.
     const minWidth = viewports[spec.viewport] ?? 0
-    return Math.round(minWidth * spec.aspectRatio)
+    return Math.round(minWidth / spec.aspectRatio)
   }
 }
 
@@ -204,15 +204,19 @@ export function getSourcesWithMinWidthSorted(
 /**
  * The source used for the src attribute of the <img> tag.
  *
- * Either the explicitly defined fallback, or the one with the lowest min-width
- * (usually the case when viewports are used), or the last one (for media
- * queries this is generally the fallthrough one).
+ * The first source without a media query, because that is the one <picture>
+ * renders when no source before it matches. This covers the fallback viewport,
+ * a viewport with a min-width of 0, the smallest viewport of the object syntax
+ * and an entry with an empty media query.
+ *
+ * When every source has a media query, the one with the lowest min-width, or
+ * else the last one.
  */
 export function getFallbackSource(
   sources: PictureSource[],
 ): PictureSource | undefined {
   return (
-    sources.find((v) => v.viewport === 'fallback') ||
+    sources.find((v) => !v.media) ||
     getSourcesWithMinWidthSorted(sources)[0] ||
     sources[sources.length - 1]
   )
