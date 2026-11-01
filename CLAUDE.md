@@ -94,7 +94,11 @@ Conventions that span several files:
   in templates or `@ts-expect-error` in scripts.
 - The `nuxt` Vitest project (`test/nuxt/`) is configured but has no tests.
 
-## Releases
+## User documentation
 
-A breaking change for users gets an entry in the README's "Upgrading from 1.x"
-section.
+- **README:** a breaking change for users gets an entry in the "Upgrading from
+  1.x" section.
+- **Agent skill:** `skills/rokka-nuxt/` is an Agent Skill for the coding agents
+  of the module's users, published in the npm package. A change to behaviour
+  users see (props, options, image styles, generated URLs or HTML) updates it in
+  the same commit.

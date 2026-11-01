@@ -255,6 +255,24 @@ By default, the module assumes two stacks with name `fe_nuxt_crop` and
 `fe_nuxt_no_crop`. You can override this globally and define your own stack
 names.
 
+## Agent skill
+
+The package ships an [Agent Skill](https://agentskills.io) that teaches coding
+agents such as Claude Code, Cursor or Codex how to use this module and how rokka
+works. Link it from the installed package with the
+[skills CLI](https://github.com/vercel-labs/skills), so that it always matches
+the installed version of the module:
+
+```
+npx skills experimental_sync
+```
+
+Or install it from GitHub, which gets the version on the main branch:
+
+```
+npx skills add rokka-io/nuxt-module
+```
+
 ## Upgrading from 1.x
 
 - **The root `aspectRatio` of a `pictures` style now crops the image.** Entries
