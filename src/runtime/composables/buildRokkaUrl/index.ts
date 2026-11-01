@@ -1,5 +1,5 @@
 import type { BuildRokkaUrlVariables, RokkaImageSource } from './../../types'
-import { getSourcePath } from './../../helpers'
+import { getFileName, getSourcePath } from './../../helpers'
 import { useRuntimeConfig } from '#imports'
 
 /**
@@ -31,6 +31,6 @@ export function buildRokkaUrl(
   }
   parts.push(modifierParts.join('--'))
   parts.push(getSourcePath(source))
-  parts.push(encodeURIComponent((name || 'image.jpg').replace('.pdf', '.jpg')))
+  parts.push(encodeURIComponent(getFileName(name)))
   return 'https://' + parts.join('/')
 }

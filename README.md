@@ -238,6 +238,8 @@ This will make it possible to define three different set of sizes per viewport.
 A `fallback` viewport with a min-width of 0 is added automatically, so
 `fallback` can not be used as the name of a viewport.
 
+Without this option, the viewports are `sm: 0`, `md: 768` and `lg: 1024`.
+
 ### dpr: `string[]`
 
 Define the DPR (device pixel ratios). If you set something like:
@@ -286,6 +288,13 @@ npx skills add rokka-io/nuxt-module
   optional, since an entry can define a `height` and an `aspectRatio` instead.
 - **`fallback` is a reserved viewport name.** It is added to the configured
   viewports with a min-width of 0. Rename a viewport called `fallback`.
+- **Configured viewports replace the default ones.** In 1.x the defaults `sm`,
+  `md` and `lg` were added to the configured `viewports`, so image styles could
+  use them even when the project did not define them. Add them to `viewports` if
+  image styles still use them.
+- **A `single` style with both `height` and `aspectRatio` renders the
+  `height`.** In 1.x the URL followed the `aspectRatio`, while the `height`
+  attribute followed `height`.
 - **The preload links of a `pictures` style changed.** Every `<source>` now gets
   its own link, and their media queries do not overlap, so the browser preloads
   only the image that the `<picture>` renders.

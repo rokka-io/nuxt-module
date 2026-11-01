@@ -90,9 +90,8 @@ export default defineNuxtConfig({
 - **`viewports`**: viewport names and their min-width in pixels; match the
   project's CSS breakpoints. Image styles are typed against these names. A
   `fallback` viewport with min-width 0 is always added, so the name `fallback`
-  is reserved. The defaults `{ sm: 0, md: 768, lg: 1024 }` are merged into the
-  configured viewports, so `sm`, `md` and `lg` always exist; give them the
-  project's own min-widths when the names overlap.
+  is reserved. Default: `{ sm: 0, md: 768, lg: 1024 }`, used only when the
+  option is not set.
 - **`dpr`**: the pixel densities that `sizes` and `pictures` render, as strings,
   `''` for 1x. Default: `['', '2']`. Every extra density is one more URL per
   entry.
@@ -196,9 +195,8 @@ pictures: [
 defineImageStyle({ type: 'single', width: 400, aspectRatio: 1 })
 ```
 
-One `<img src>` at exactly that size: no `srcset`, no densities, and `preload`
-has no effect. Crop it with either `height` or `aspectRatio`. With both, the URL
-follows `aspectRatio` while the `height` attribute follows `height`.
+One `<img src>` at exactly that size: no `srcset`, no densities. Crop it with a
+`height` or an `aspectRatio`; with both, the `height` wins.
 
 ### Stack name
 
@@ -214,17 +212,17 @@ other stacks than the configured ones.
 
 ## `<RokkaImage>` props
 
-| Prop                            | What it does                                                                                                                                                                                                                                                                                                                                          |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hash` or `remote`              | The source image. Exactly one of them; vue-tsc reports a missing or a second one.                                                                                                                                                                                                                                                                     |
-| `config`                        | An image style, or the name of a stack.                                                                                                                                                                                                                                                                                                               |
-| `alt`, `title`                  | Set on the `<img>`.                                                                                                                                                                                                                                                                                                                                   |
-| `source-width`, `source-height` | The source image's size, for the `width` and `height` attributes, see [Width and height](#width-and-height).                                                                                                                                                                                                                                          |
-| `file-name`                     | The last URL segment, `image.jpg` by default. Search engines see it, and its extension sets the output format. Pass the source image's name, ending in `.jpg`, `.png`, `.gif` or `.webp`: replace any other extension (`.tif`, `.heic`, `.psd`) with `.jpg`, since rokka delivers those formats as they are. A name without an extension returns 404. |
-| `loading`                       | `lazy` or `eager`.                                                                                                                                                                                                                                                                                                                                    |
-| `preload`                       | Adds `<link rel="preload">` to the server-rendered head, for `sizes` and `pictures`. For the LCP image, with `loading="eager"`.                                                                                                                                                                                                                       |
-| `img-class`                     | Class on the `<img>`.                                                                                                                                                                                                                                                                                                                                 |
-| `host`                          | Another rokka host for this one image.                                                                                                                                                                                                                                                                                                                |
+| Prop                            | What it does                                                                                                                                                                                                                                  |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `hash` or `remote`              | The source image. Exactly one of them; vue-tsc reports a missing or a second one.                                                                                                                                                             |
+| `config`                        | An image style, or the name of a stack.                                                                                                                                                                                                       |
+| `alt`, `title`                  | Set on the `<img>`.                                                                                                                                                                                                                           |
+| `source-width`, `source-height` | The source image's size, for the `width` and `height` attributes, see [Width and height](#width-and-height).                                                                                                                                  |
+| `file-name`                     | The last URL segment, `image.jpg` by default. Search engines see it, and its extension sets the output format. Pass the source image's name: an extension browsers can not display (`.tif`, `.heic`, `.pdf`) or a missing one becomes `.jpg`. |
+| `loading`                       | `lazy` or `eager`.                                                                                                                                                                                                                            |
+| `preload`                       | Adds `<link rel="preload">` to the server-rendered head. For the LCP image, with `loading="eager"`.                                                                                                                                           |
+| `img-class`                     | Class on the `<img>`.                                                                                                                                                                                                                         |
+| `host`                          | Another rokka host for this one image.                                                                                                                                                                                                        |
 
 Other attributes and listeners, `class` included, land on the root element: the
 `<img>` for `single` and `sizes`, the `<picture>` for `pictures`. Style the
@@ -240,7 +238,8 @@ the type:
 - **`single`** with a `height` or an `aspectRatio`: from the image style.
   Without either, from `source-width` and `source-height`.
 - **`sizes`**: from `source-width` and `source-height`, cropped to the
-  `aspectRatio`. Without them the `<img>` has none.
+  `aspectRatio`. Without them, from the largest width in `sizes` and the
+  `aspectRatio`; without an `aspectRatio` either, the `<img>` has none.
 - **`pictures`**: every `<source>` gets the `width` and `height` of its entry,
   and a `height` only when the entry has a `height` or an `aspectRatio`, the
   root one included. The `<img>` has none, and `source-width` does not count.
@@ -307,7 +306,6 @@ Request the failing URL; rokka answers with a JSON error.
 | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
 | 404 `No source image with hash … for organization …`                       | The hash is wrong, belongs to another organization (check `host`), or the image was deleted.                                 |
 | 404 `No such stack with name …`                                            | The stack does not exist in this organization: create it, see [references/stacks.md](references/stacks.md), or fix `stacks`. |
-| 404 `No route found.`                                                      | The file name has no extension.                                                                                              |
 | 404 `No image found.`                                                      | rokka could not fetch the remote image, or the server is not allowed.                                                        |
 | 400 `The DPR stack option can only be used with a dpr capable operation …` | The stack has no `resize` operation, see [references/stacks.md](references/stacks.md#other-stacks).                          |
 | The image ignores the requested size                                       | The stack does not read the variables `w` and `h`, see [references/stacks.md](references/stacks.md#other-stacks).            |

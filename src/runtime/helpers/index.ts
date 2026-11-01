@@ -22,6 +22,47 @@ export function getSourcePath(source: string | RokkaImageSource): string {
 }
 
 /**
+ * Extensions of the formats that browsers display.
+ */
+const BROWSER_FORMATS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'svg']
+
+/**
+ * The file name at the end of a rokka URL.
+ *
+ * rokka renders the format of the file extension, and answers a name without
+ * one with a 404. A name that does not end in a format browsers display, such
+ * as a TIFF or PDF source, gets .jpg instead.
+ */
+export function getFileName(name?: string): string {
+  if (!name) {
+    return 'image.jpg'
+  }
+  const match = name.match(/^(.+)\.([^.]+)$/)
+  if (!match) {
+    return name + '.jpg'
+  }
+  const [, base, extension] = match
+  return BROWSER_FORMATS.includes(extension!.toLowerCase())
+    ? name
+    : base + '.jpg'
+}
+
+/**
+ * The height of a single image: its explicit height, or the height its aspect
+ * ratio gives. Both the URL and the height attribute use it.
+ */
+export function getSingleHeight(
+  config: DefineImageStyleConfigSingle,
+): number | undefined {
+  if (config.height) {
+    return config.height
+  }
+  if (config.aspectRatio) {
+    return Math.round(config.width / config.aspectRatio)
+  }
+}
+
+/**
  * Calculates the width and height attributes for images so that <img>
  * elements define a correct aspect ratio.
  */
@@ -31,17 +72,11 @@ export function getImageAttributes(
   sourceHeight?: number,
 ) {
   if (config.type === 'single') {
-    if (config.height) {
-      // Explicit height is defined.
+    const height = getSingleHeight(config)
+    if (height) {
       return {
         width: config.width,
-        height: config.height,
-      }
-    } else if (config.aspectRatio) {
-      // Aspect ratio is defined. We can calculate the resulting height.
-      return {
-        width: config.width,
-        height: Math.round(config.width / config.aspectRatio),
+        height,
       }
     }
 
@@ -55,6 +90,7 @@ export function getImageAttributes(
         height: Math.round(config.width / originalAspectRatio),
       }
     }
+    return
   }
 
   if (sourceWidth && sourceHeight) {
@@ -72,6 +108,19 @@ export function getImageAttributes(
     return {
       width: sourceWidth,
       height: sourceHeight,
+    }
+  }
+
+  // Without the source size, the aspect ratio still gives the proportions.
+  // The width is the largest one the image is displayed at.
+  const widths = Object.values(config.sizes).filter(
+    (width): width is number => !!width,
+  )
+  if (config.aspectRatio && widths.length) {
+    const width = Math.max(...widths)
+    return {
+      width,
+      height: Math.round(width / config.aspectRatio),
     }
   }
 }
