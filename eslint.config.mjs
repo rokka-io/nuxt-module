@@ -1,5 +1,11 @@
+import { fileURLToPath } from 'node:url'
 import { createConfigForNuxt } from '@nuxt/eslint-config/flat'
+import oxlint from 'eslint-plugin-oxlint'
 
+// Oxlint runs first and covers every rule it supports (see .oxlintrc.json).
+// ESLint only runs the rest, mostly the Vue template rules: the oxlint config
+// appended at the end turns off the rules that oxlint already covers.
+//
 // Run `npx @eslint/config-inspector` to inspect the resolved config interactively
 export default createConfigForNuxt({
   features: {
@@ -49,3 +55,9 @@ export default createConfigForNuxt({
       '@typescript-eslint/ban-ts-comment': 'off',
     },
   })
+  // Must come last, so that it turns off the rules oxlint covers.
+  .append(
+    oxlint.buildFromConfigFile(
+      fileURLToPath(new URL('./.oxlintrc.json', import.meta.url)),
+    ),
+  )
