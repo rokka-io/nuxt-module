@@ -32,7 +32,8 @@ export type PictureInputArrayItem = PictureInputSpec & {
  * The `pictures` property, in either the object or the array syntax.
  */
 export type PicturesInput =
-  Partial<Record<string, PictureInputSpec>> | PictureInputArrayItem[]
+  | Partial<Record<string, PictureInputSpec>>
+  | PictureInputArrayItem[]
 
 /**
  * A normalised picture config, after both syntaxes have been merged.

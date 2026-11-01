@@ -37,8 +37,8 @@
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxi prepare playground",
     "lint": "oxlint src && eslint ./src",
     "lint:fix": "oxlint src --fix && eslint ./src --fix",
-    "prettier": "prettier --check .",
-    "prettier:fix": "prettier --write .",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
     "test": "vitest run ",
     "test:watch": "vitest watch --disable-console-intercept --no-file-parallelism"
   },
@@ -62,13 +62,11 @@
     "@nuxt/test-utils": "^4.3.4",
     "@types/node": "^24.19.2",
     "eslint": "^10.14.0",
-    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-oxlint": "^1.90.0",
-    "eslint-plugin-prettier": "^5.5.7",
     "nuxt": "^4.6.3",
+    "oxfmt": "^0.75.0",
     "oxlint": "^1.90.0",
     "playwright-core": "^1.64.1",
-    "prettier": "^3.9.10",
     "vitest": "^5.0.5",
     "vue-tsc": "^3.3.14"
   }
