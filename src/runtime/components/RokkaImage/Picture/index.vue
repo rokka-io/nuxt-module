@@ -1,5 +1,5 @@
 <template>
-  <picture>
+  <picture v-if="fallback">
     <source
       v-for="(source, index) in sources"
       :key="index"
@@ -11,7 +11,7 @@
     <img
       :alt="alt"
       :title="title"
-      :src="fallback?.src"
+      :src="fallback.src"
       :loading="loading"
       :class="imgClass"
     />
