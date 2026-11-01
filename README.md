@@ -79,6 +79,10 @@ const imageStyle = defineImageStyle({
 })
 ```
 
+The smallest viewport is used when no other viewport matches. To define an image
+below your smallest viewport, use the special `fallback` viewport. It is always
+available and has a min-width of 0.
+
 Or with general media query support:
 
 ```typescript
@@ -102,9 +106,9 @@ const imageStyle = defineImageStyle({
       viewport: 'md',
       width: 100,
     },
-    // Define a fallback if all cases don't match.
+    // The fallback viewport is used when no entry above matches.
     {
-      media: '',
+      viewport: 'fallback',
       width: 2000,
     },
   ],
@@ -137,6 +141,9 @@ const noCrop = defineImageStyle({
   },
 })
 ```
+
+Use the special `fallback` viewport to define the size below the smallest
+viewport.
 
 ### `<img>` element with a single src attribute
 
@@ -197,6 +204,9 @@ define something like this:
 
 This will make it possible to define three different set of sizes per viewport.
 
+A `fallback` viewport with a min-width of 0 is added automatically, so
+`fallback` can not be used as the name of a viewport.
+
 ### dpr: `string[]`
 
 Define the DPR (device pixel ratios). If you set something like:
@@ -213,3 +223,20 @@ Then all generated images will have three variants, one for < 1.5 DPR, one for
 By default, the module assumes two stacks with name `fe_nuxt_crop` and
 `fe_nuxt_no_crop`. You can override this globally and define your own stack
 names.
+
+## Upgrading from 1.x
+
+- **The root `aspectRatio` of a `pictures` style now crops the image.** Entries
+  that only define a `width` are cropped to the root `aspectRatio`, using the
+  crop stack. In 1.x the root `aspectRatio` only set the `width` and `height`
+  attributes of the `<source>` elements, and the image kept the aspect ratio of
+  the original. To keep the 1.x images, remove the root `aspectRatio`. The
+  `<source>` elements then have no `height` attribute.
+- **`pictures` can be an array.** Code that reads `style.pictures` has to check
+  `Array.isArray(style.pictures)` first. The `width` of an entry is now
+  optional, since an entry can define a `height` and an `aspectRatio` instead.
+- **`fallback` is a reserved viewport name.** It is added to the configured
+  viewports with a min-width of 0. Rename a viewport called `fallback`.
+- **The preload links of a `pictures` style changed.** Every `<source>` now gets
+  its own link, and their media queries do not overlap, so the browser preloads
+  only the image that the `<picture>` renders.
