@@ -7,6 +7,7 @@ export type DefineImageStyleConfigPicturesViewport =
       aspectRatio?: number
     }
   | {
+      width?: never
       height: number
       aspectRatio: number
     }
