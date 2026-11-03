@@ -34,16 +34,18 @@ const BROWSER_FORMATS = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'avif', 'svg']
  * as a TIFF or PDF source, gets .jpg instead.
  */
 export function getFileName(name?: string): string {
-  if (!name) {
+  // Trailing dots would end up before the added extension: 'photo..jpg'.
+  const trimmed = name?.replace(/\.+$/, '')
+  if (!trimmed) {
     return 'image.jpg'
   }
-  const match = name.match(/^(.+)\.([^.]+)$/)
+  const match = trimmed.match(/^(.+)\.([^.]+)$/)
   if (!match) {
-    return name + '.jpg'
+    return trimmed + '.jpg'
   }
   const [, base, extension] = match
   return BROWSER_FORMATS.includes(extension!.toLowerCase())
-    ? name
+    ? trimmed
     : base + '.jpg'
 }
 

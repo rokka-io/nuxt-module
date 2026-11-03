@@ -168,10 +168,11 @@ defineImageStyle({
 Renders a `<picture>` with one `<source>` per entry, largest viewport first,
 each with a `min-width` media query and one URL per density as `x` descriptors.
 The smallest entry has no media query and serves every screen below the others.
-The `<img>` uses the entry without a media query, at 1x.
+The `<img>` gets the `srcset` of the entry without a media query.
 
 - Each entry has a `width`, or a `height` with an `aspectRatio`, in CSS pixels;
-  every density renders it that many times larger.
+  every density renders it that many times larger. With a root `aspectRatio`, a
+  `height` alone is enough.
 - The root `aspectRatio` applies to every entry without its own `height` or
   `aspectRatio`, and crops it. In the example, `md` is cropped to 4/3. To keep
   the source aspect ratio for width-only entries, leave out the root
@@ -179,7 +180,10 @@ The `<img>` uses the entry without a media query, at 1x.
 
 For media queries other than min-width, pass an array. The browser uses the
 first entry that matches, so the array order is the priority: most specific
-first, `fallback` last.
+first, `fallback` last. Without an entry that always matches, the `<img>` shows
+the entry with the smallest viewport, or else the last one. Write the queries as
+conditions, like `(min-width: 768px)`: with `preload`, a media type like
+`screen and …` ends the preload links after its entry.
 
 ```ts
 pictures: [
@@ -224,10 +228,10 @@ other stacks than the configured ones.
 | `img-class`                     | Class on the `<img>`.                                                                                                                                                                                                                         |
 | `host`                          | Another rokka host for this one image.                                                                                                                                                                                                        |
 
-Other attributes and listeners, `class` included, land on the root element: the
-`<img>` for `single` and `sizes`, the `<picture>` for `pictures`. Style the
-image itself with `img-class`. On a `<picture>`, attributes like `fetchpriority`
-and listeners like `@load` have no effect.
+Other attributes and listeners, such as `fetchpriority`, `data-*` or `@load`,
+land on the `<img>`. `class` and `style` land on the root element: the `<img>`
+for `single` and `sizes`, the `<picture>` for `pictures`. Style the image itself
+with `img-class`.
 
 ## Width and height
 
@@ -318,5 +322,6 @@ Request the failing URL; rokka answers with a JSON error.
 
 Version 1 has no `remote` prop, no `error` event, no `fallback` viewport and no
 array syntax for `pictures`, and its root `aspectRatio` in a `pictures` style
-does not crop. Its `buildRokkaUrl()` takes the hash only as a string. The
+does not crop. Its `buildRokkaUrl()` takes the hash only as a string. With a
+`pictures` style, it puts all attributes and listeners on the `<picture>`. The
 module's README lists every change under "Upgrading from 1.x".

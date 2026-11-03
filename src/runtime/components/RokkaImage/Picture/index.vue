@@ -1,5 +1,5 @@
 <template>
-  <picture v-if="fallback">
+  <picture v-if="fallback" :class="$attrs.class" :style="$attrs.style">
     <source
       v-for="(item, index) in sources"
       :key="index"
@@ -9,9 +9,11 @@
       :height="item.height"
     />
     <img
+      v-bind="getImgAttrs()"
       :alt="alt"
       :title="title"
       :src="fallback.src"
+      :srcset="fallback.srcset"
       :loading="loading"
       :class="imgClass"
       @error="emit('error', $event)"
@@ -34,7 +36,31 @@ import type {
   BuildRokkaUrlVariables,
   RokkaImageSource,
 } from '#rokka/types'
-import { buildRokkaUrl, computed, useRuntimeConfig, useHead } from '#imports'
+import {
+  buildRokkaUrl,
+  computed,
+  useAttrs,
+  useRuntimeConfig,
+  useHead,
+} from '#imports'
+
+// Attributes and listeners go to the <img>, like for the other types, where
+// `fetchpriority` or `@load` work. Only `class` and `style` stay on the
+// <picture>.
+defineOptions({ inheritAttrs: false })
+
+const attrs = useAttrs()
+
+/**
+ * The attributes for the <img>: all but `class` and `style`.
+ *
+ * A function and not a computed, since attrs are not reactive.
+ */
+function getImgAttrs() {
+  return Object.fromEntries(
+    Object.entries(attrs).filter(([key]) => key !== 'class' && key !== 'style'),
+  )
+}
 
 const runtimeConfig = useRuntimeConfig()
 
@@ -184,10 +210,11 @@ const fallback = computed(() => {
     return null
   }
 
+  // The srcset as well, for when no <source> matches: below the smallest
+  // media query of an array without a catch-all entry.
   return {
     src: fallbackUrl,
-    width: source.width,
-    height: source.height,
+    srcset: source.srcset,
   }
 })
 

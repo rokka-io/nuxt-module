@@ -61,7 +61,7 @@ import ImageSizes from './Sizes/index.vue'
 import ImageSingle from './Single/index.vue'
 import { getSourcePath } from './../../helpers'
 import type { DefineImageStyleConfig, RokkaImageSource } from '#rokka/types'
-import { computed, onMounted, useTemplateRef } from '#imports'
+import { computed, onMounted, ref } from '#imports'
 
 /**
  * Either `hash` or `remote` is required, not both.
@@ -175,7 +175,9 @@ const sourceKey = computed(() =>
   source.value ? getSourcePath(source.value) : '',
 )
 
-const image = useTemplateRef<{ $el: unknown }>('image')
+// A plain ref instead of useTemplateRef(), which #imports only provides from
+// Nuxt 3.13.1 on.
+const image = ref<{ $el: unknown } | null>(null)
 
 function onError(event: Event) {
   emit('error', event)

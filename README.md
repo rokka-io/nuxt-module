@@ -146,6 +146,12 @@ const imageStyle = defineImageStyle({
 })
 ```
 
+Without an entry that always matches, such as the `fallback` viewport, the
+`<img>` shows the entry with the smallest viewport, or else the last entry, when
+no entry matches.
+
+With a root `aspectRatio`, an entry can define only a `height`.
+
 ### `<img>` element with `srcset` and `sizes` attributes
 
 ```typescript
@@ -154,6 +160,7 @@ const crop = defineImageStyle({
   type: 'sizes',
   aspectRatio: 16 / 9,
   sizes: {
+    fallback: 320,
     sm: 375,
     md: 768,
     lg: 980,
@@ -165,6 +172,7 @@ const crop = defineImageStyle({
 const noCrop = defineImageStyle({
   type: 'sizes',
   sizes: {
+    fallback: 320,
     sm: 375,
     md: 768,
     lg: 980,
@@ -174,7 +182,8 @@ const noCrop = defineImageStyle({
 ```
 
 Use the special `fallback` viewport to define the size below the smallest
-viewport.
+viewport. Without it, the browser assumes that the image is as wide as the
+screen there.
 
 ### `<img>` element with a single src attribute
 
@@ -285,7 +294,13 @@ npx skills add rokka-io/nuxt-module
   `<source>` elements then have no `height` attribute.
 - **`pictures` can be an array.** Code that reads `style.pictures` has to check
   `Array.isArray(style.pictures)` first. The `width` of an entry is now
-  optional, since an entry can define a `height` and an `aspectRatio` instead.
+  optional, since an entry can define a `height` and an `aspectRatio` instead,
+  or only a `height` when the style has a root `aspectRatio`.
+- **Attributes and listeners go to the `<img>` of a `pictures` style.** In 1.x
+  they landed on the `<picture>`, where `fetchpriority` and `@load` have no
+  effect. `class` and `style` stay on the `<picture>`. CSS or scripts that look
+  for an `id` or a `data-*` attribute on the `<picture>` have to look at the
+  `<img>`.
 - **`fallback` is a reserved viewport name.** It is added to the configured
   viewports with a min-width of 0. Rename a viewport called `fallback`.
 - **Configured viewports replace the default ones.** In 1.x the defaults `sm`,
@@ -297,4 +312,11 @@ npx skills add rokka-io/nuxt-module
   attribute followed `height`.
 - **The preload links of a `pictures` style changed.** Every `<source>` now gets
   its own link, and their media queries do not overlap, so the browser preloads
-  only the image that the `<picture>` renders.
+  only the image that the `<picture>` renders. A media query with a media type,
+  like `screen and (min-width: 768px)`, can not be excluded, so the links end
+  after its `<source>`.
+- **The `sizes` attribute uses the exact min-width of each viewport.** 1.x
+  subtracted one pixel: `(min-width: 767px)` for a viewport of 768.
+- **A `srcset` lists every width once.** When two entries of a `sizes` style
+  render a file of the same width, such as 400 at 2x and 800 at 1x, only the one
+  with the lower density is kept.

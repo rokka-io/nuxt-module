@@ -1,7 +1,11 @@
 import { fileURLToPath } from 'node:url'
 import { describe, it, expect } from 'vitest'
 import { setup, createPage } from '@nuxt/test-utils/e2e'
-import { buildPictureData, getPreloadLinks } from './helpers'
+import {
+  buildPictureData,
+  getPreloadLinks,
+  getPreloadedAndRendered,
+} from './helpers'
 
 describe('The <RokkaImage> component for pictures', async () => {
   await setup({
@@ -150,6 +154,57 @@ describe('The <RokkaImage> component for pictures', async () => {
         url: 'https://rokka-demos.rokka.io/STACK_CROP/variables-w-300-h-300/HASH/image.jpg',
       },
     ])
+  })
+
+  // Every combination of width and orientation the queries tell apart.
+  const windowSizes = [320, 500, 650, 800, 950, 1100, 1300].flatMap((width) =>
+    [400, 900, 1400].map((height) => ({ width, height })),
+  )
+
+  it('preloads exactly the image the <picture> renders', async () => {
+    const page = await createPage('/pictures-preload-queries')
+
+    for (const size of windowSizes) {
+      await page.setViewportSize(size)
+      const { preloaded, rendered } = await getPreloadedAndRendered(
+        page,
+        'pictures',
+      )
+      expect(preloaded, `at ${size.width}x${size.height}`).toEqual([rendered])
+    }
+  })
+
+  it('gives the <img> a srcset for when no <source> matches', async () => {
+    const page = await createPage('/pictures-preload-queries')
+    const data = await buildPictureData(page, 'pictures')
+    const srcset = await page
+      .locator('#pictures picture img')
+      .getAttribute('srcset')
+
+    // The entry with the lowest min-width, the last one.
+    expect(srcset).toBe(
+      data.sources[4]!.srcsets.map((v) => `${v.url} ${v.dpi}`).join(', '),
+    )
+  })
+
+  it('never preloads a second image after a media type', async () => {
+    const page = await createPage('/pictures-preload-media-type')
+
+    expect(await getPreloadLinks(page)).toHaveLength(1)
+
+    for (const size of windowSizes) {
+      await page.setViewportSize(size)
+      const { preloaded, rendered } = await getPreloadedAndRendered(
+        page,
+        'pictures',
+      )
+      expect(preloaded.length, `at ${size.width}x${size.height}`).toBeLessThan(
+        2,
+      )
+      if (preloaded.length) {
+        expect(preloaded).toEqual([rendered])
+      }
+    }
   })
 
   it('calculates the height using aspect ratios', async () => {

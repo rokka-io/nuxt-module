@@ -25,9 +25,14 @@ every tsconfig extends.
   `npx playwright-core install chromium`.
 - `npm run dev`: the playground in `playground/`
 - `npm run prepack`: builds `dist/`
+- `npm run typecheck:dist`: after `prepack`, checks that `dist/module.d.mts`
+  does not type the module as `any`. The build reads its compiler options from
+  the root `tsconfig.json`, which is why that file extends
+  `.nuxt/tsconfig.node.json`.
 
 CI (`.github/workflows/ci.yml`) runs `dev:prepare`, `typecheck`, `lint`,
-`format:check`, `test`, `prepack` and `dev:build`, in that order.
+`format:check`, `test`, `prepack`, `typecheck:dist` and `dev:build`, in that
+order.
 
 Single tests:
 
@@ -65,10 +70,9 @@ Conventions that span several files:
 
 - **Explicit imports.** `.nuxtrc` sets `imports.autoImport=false`. Runtime code,
   fixture pages and the playground import from `#imports`.
-- **Pure helpers.** `src/runtime/helpers/picture.ts` and `getSourcePath()` in
-  `helpers/index.ts` import nothing from Nuxt or Vue and take the viewports as
-  an argument, so the unit tests run in plain Node. Put new logic there and test
-  it in `test/unit/`.
+- **Pure helpers.** The files in `src/runtime/helpers/` import nothing from Nuxt
+  or Vue and take the viewports and densities as arguments, so the unit tests
+  run in plain Node. Put new logic there and test it in `test/unit/`.
 - **The `hash` or `remote` union.** `<RokkaImage>` declares it locally rather
   than importing it, because Vue's compiler has to resolve it to generate
   runtime props. At runtime both props are optional; only vue-tsc enforces the
@@ -79,7 +83,12 @@ Conventions that span several files:
   Vue attaches listeners.
 - **Preload.** Preload links are added with `useHead` on the server only. For
   `pictures`, `getPreloadLinks()` makes the media queries non-overlapping, so
-  only the image the `<picture>` renders is preloaded.
+  only the image the `<picture>` renders is preloaded. A query it can not
+  exclude, one with a media type, ends the links: a width without a preload is
+  better than two downloads.
+- **Attributes.** `<RokkaImage>` passes attributes and listeners through to the
+  `<img>`. `Picture` sets `inheritAttrs: false` and keeps only `class` and
+  `style` on the `<picture>`.
 
 ## Tests
 
@@ -92,6 +101,8 @@ Conventions that span several files:
 - **`test/types/*.vue`:** type tests, checked by `npm run typecheck:test` and
   not by Vitest. A line that must not compile gets a `@vue-expect-error` comment
   in templates or `@ts-expect-error` in scripts.
+- **`test/package/`:** type tests for the built module, checked by
+  `npm run typecheck:dist` after `prepack`.
 - The `nuxt` Vitest project (`test/nuxt/`) is configured but has no tests.
 
 ## User documentation

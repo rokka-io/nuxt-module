@@ -226,32 +226,67 @@ export function getFallbackSource(
 const MIN_WIDTH_QUERY = /^\(min-width: (\d+)px\)$/
 
 /**
- * Combine a source's own media query with the exclusion of every query that
- * comes before it.
- *
- * <picture> picks the first matching <source>, but every matching preload link
- * is fetched, so the links have to be made mutually exclusive by hand.
- *
- * When all preceding queries are a plain min-width - which is the case for
- * every viewport based config - the exclusion collapses into a single
- * max-width. That keeps the output readable and avoids the Media Queries
- * level 4 `not` syntax, which older browsers treat as an invalid query.
+ * Split a media query list at its top-level commas. A list matches when any
+ * of its queries does.
  */
-function excludePreceding(
-  own: string | undefined,
-  preceding: string[],
-): string | undefined {
-  if (!preceding.length) {
-    return own
+function splitQueryList(media: string): string[] {
+  const queries: string[] = []
+  let depth = 0
+  let start = 0
+
+  for (let i = 0; i < media.length; i++) {
+    const char = media[i]
+    if (char === '(') {
+      depth++
+    } else if (char === ')') {
+      depth--
+    } else if (char === ',' && depth === 0) {
+      queries.push(media.slice(start, i))
+      start = i + 1
+    }
+  }
+  queries.push(media.slice(start))
+
+  return queries.map((v) => v.trim()).filter(Boolean)
+}
+
+/**
+ * The words of a query outside its parentheses, lowercase: ['and'] for
+ * '(a) and (b)', ['screen', 'and'] for 'screen and (a)'.
+ */
+function getTopLevelWords(query: string): string[] {
+  let depth = 0
+  let text = ''
+
+  for (const char of query) {
+    if (char === '(') {
+      depth++
+    }
+    text += depth === 0 ? char : ' '
+    if (char === ')') {
+      depth--
+    }
   }
 
-  const maxWidth = collapsibleMaxWidth(preceding)
-  const conditions =
-    maxWidth === undefined
-      ? preceding.map((v) => `(not ${v})`)
-      : [`(max-width: ${maxWidth}px)`]
+  return text.toLowerCase().split(/\s+/).filter(Boolean)
+}
 
-  return (own ? [own, ...conditions] : conditions).join(' and ')
+/**
+ * Whether the query is a media condition, which can be negated and combined
+ * with other conditions. A query with a media type, like 'screen and (a)', is
+ * not.
+ */
+function isCondition(query: string): boolean {
+  return getTopLevelWords(query).every((word) =>
+    ['and', 'or', 'not'].includes(word),
+  )
+}
+
+/**
+ * Exclude a condition: '(not (a))'.
+ */
+function negate(query: string): string {
+  return getTopLevelWords(query).length ? `(not (${query}))` : `(not ${query})`
 }
 
 /**
@@ -288,30 +323,91 @@ function collapsibleMaxWidth(preceding: string[]): number | undefined {
 }
 
 /**
+ * The condition that excludes every given query, or undefined for none.
+ *
+ * When all of them are a plain min-width - which is the case for every
+ * viewport based config - the exclusion collapses into a single max-width.
+ * That keeps the output readable and avoids the Media Queries level 4 `not`
+ * syntax, which older browsers treat as an invalid query.
+ */
+function exclude(preceding: string[]): string | undefined {
+  if (!preceding.length) {
+    return
+  }
+
+  const maxWidth = collapsibleMaxWidth(preceding)
+  return maxWidth === undefined
+    ? preceding.map(negate).join(' and ')
+    : `(max-width: ${maxWidth}px)`
+}
+
+/**
+ * Combine each condition of a source's query list with the exclusion of the
+ * queries before it.
+ */
+function combine(queries: string[], exclusion: string): string {
+  return queries
+    .map((query) => {
+      // Only a chain of `and` can be extended as it is. 'or' and 'not' need
+      // parentheses: '(a) or (b) and (c)' is not a valid query.
+      const words = getTopLevelWords(query)
+      const own = words.every((word) => word === 'and') ? query : `(${query})`
+      return `${own} and ${exclusion}`
+    })
+    .join(', ')
+}
+
+function preloadLink(imagesrcset: string, media?: string): PreloadLink {
+  return { rel: 'preload', as: 'image', imagesrcset, media }
+}
+
+/**
  * Build the preload links for the given sources.
  *
- * One link per source, in the same order as the <source> elements, with
- * mutually exclusive media queries so that the browser preloads exactly the
- * image that <picture> will end up rendering.
+ * <picture> picks the first matching <source>, but every matching preload link
+ * is fetched, so the links have to be made mutually exclusive by hand: one link
+ * per source, in the same order as the <source> elements, each excluding the
+ * queries before it. When every source has a media query, a last link covers
+ * the <img>, which renders when none of them matches.
+ *
+ * A query with a media type, like 'screen and (min-width: 768px)', can not be
+ * excluded, so the links end before the source after it. Some widths then
+ * preload nothing, which is better than preloading two images.
  */
 export function getPreloadLinks(sources: PictureSource[]): PreloadLink[] {
   const links: PreloadLink[] = []
+  // The queries of the sources so far, split at their commas.
   const preceding: string[] = []
 
   for (const source of sources) {
-    links.push({
-      rel: 'preload',
-      as: 'image',
-      imagesrcset: source.srcset,
-      media: excludePreceding(source.media, preceding),
-    })
+    const queries = splitQueryList(source.media || '')
+    const exclusion = exclude(preceding)
 
     // A source without a media query always matches, so no later source can.
-    if (!source.media) {
-      break
+    if (!queries.length) {
+      links.push(preloadLink(source.srcset, exclusion))
+      return links
     }
 
-    preceding.push(source.media)
+    if (!queries.every(isCondition)) {
+      if (!exclusion) {
+        links.push(preloadLink(source.srcset, source.media))
+      }
+      return links
+    }
+
+    links.push(
+      preloadLink(
+        source.srcset,
+        exclusion ? combine(queries, exclusion) : source.media,
+      ),
+    )
+    preceding.push(...queries)
+  }
+
+  const fallback = getFallbackSource(sources)
+  if (fallback) {
+    links.push(preloadLink(fallback.srcset, exclude(preceding)))
   }
 
   return links

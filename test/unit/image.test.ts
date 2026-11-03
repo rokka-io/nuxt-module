@@ -106,4 +106,10 @@ describe('getFileName', () => {
   it('adds .jpg to a name without an extension', () => {
     expect(getFileName('photo')).toBe('photo.jpg')
   })
+
+  it('removes trailing dots', () => {
+    expect(getFileName('photo.')).toBe('photo.jpg')
+    expect(getFileName('photo.png..')).toBe('photo.png')
+    expect(getFileName('...')).toBe('image.jpg')
+  })
 })

@@ -38,7 +38,7 @@ export type ModuleOptions = {
      *
      * The stack must define a variable "w" and "h" for width and height.
      */
-    crop: string
+    crop?: string
 
     /**
      * The stack to use when the image should not be cropped.
@@ -46,7 +46,7 @@ export type ModuleOptions = {
      *
      * The stack must define a variable "w" for the width.
      */
-    noCrop: string
+    noCrop?: string
   }
 }
 
