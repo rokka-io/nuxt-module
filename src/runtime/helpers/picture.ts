@@ -298,20 +298,20 @@ function parseMinWidth(media: string): number | undefined {
 }
 
 /**
- * The single max-width that excludes all of the given queries, or undefined
- * if they can not be expressed that way.
+ * The smallest of the given min-width queries, or undefined if one of them is
+ * not a plain min-width.
  *
- * Excluding a set of min-width queries means staying below the smallest of
- * them, so they collapse into one max-width.
+ * Staying below the smallest of a set of min-widths excludes all of them, so
+ * they collapse into one.
  */
-function collapsibleMaxWidth(preceding: string[]): number | undefined {
+function lowestMinWidth(preceding: string[]): number | undefined {
   const minWidths: number[] = []
 
   for (const media of preceding) {
     const minWidth = parseMinWidth(media)
 
     // A query that is not a plain min-width, or one that always matches,
-    // can not be turned into a max-width.
+    // can not be collapsed.
     if (minWidth === undefined || minWidth <= 0) {
       return undefined
     }
@@ -319,26 +319,28 @@ function collapsibleMaxWidth(preceding: string[]): number | undefined {
     minWidths.push(minWidth)
   }
 
-  return Math.min(...minWidths) - 1
+  return Math.min(...minWidths)
 }
 
 /**
  * The condition that excludes every given query, or undefined for none.
  *
  * When all of them are a plain min-width - which is the case for every
- * viewport based config - the exclusion collapses into a single max-width.
- * That keeps the output readable and avoids the Media Queries level 4 `not`
- * syntax, which older browsers treat as an invalid query.
+ * viewport based config - the exclusion collapses into a single one.
+ *
+ * It is negated rather than turned into a max-width one pixel lower: zoom can
+ * make the viewport 1279.5px wide, where neither '(min-width: 1280px)' nor
+ * '(max-width: 1279px)' matches.
  */
 function exclude(preceding: string[]): string | undefined {
   if (!preceding.length) {
     return
   }
 
-  const maxWidth = collapsibleMaxWidth(preceding)
-  return maxWidth === undefined
+  const minWidth = lowestMinWidth(preceding)
+  return minWidth === undefined
     ? preceding.map(negate).join(' and ')
-    : `(max-width: ${maxWidth}px)`
+    : negate(`(min-width: ${minWidth}px)`)
 }
 
 /**

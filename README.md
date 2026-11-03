@@ -1,4 +1,4 @@
-# Responsive images with rokka for Nuxt 3
+# Responsive images with rokka for Nuxt
 
 ## Setup
 

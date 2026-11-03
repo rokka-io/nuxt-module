@@ -103,7 +103,6 @@ Conventions that span several files:
   in templates or `@ts-expect-error` in scripts.
 - **`test/package/`:** type tests for the built module, checked by
   `npm run typecheck:dist` after `prepack`.
-- The `nuxt` Vitest project (`test/nuxt/`) is configured but has no tests.
 
 ## User documentation
 

@@ -105,7 +105,7 @@ describe('The <RokkaImage> component for pictures', async () => {
               "url": "https://rokka-demos.rokka.io/STACK_CROP/variables-w-1024-h-300--options-dpr-2/HASH/image.jpg",
             },
           ],
-          "media": "(min-width: 1280px) and (max-width: 1679px)",
+          "media": "(min-width: 1280px) and (not (min-width: 1680px))",
           "rel": "preload",
         },
         {
@@ -124,7 +124,7 @@ describe('The <RokkaImage> component for pictures', async () => {
               "url": "https://rokka-demos.rokka.io/STACK_CROP/variables-w-375-h-938--options-dpr-2/HASH/image.jpg",
             },
           ],
-          "media": "(max-width: 1279px)",
+          "media": "(not (min-width: 1280px))",
           "rel": "preload",
         },
       ]
@@ -146,11 +146,11 @@ describe('The <RokkaImage> component for pictures', async () => {
         url: 'https://rokka-demos.rokka.io/STACK_CROP/variables-w-1024-h-300/HASH/image.jpg',
       },
       {
-        media: '(min-width: 600px) and (max-width: 1279px)',
+        media: '(min-width: 600px) and (not (min-width: 1280px))',
         url: 'https://rokka-demos.rokka.io/STACK_CROP/variables-w-600-h-300/HASH/image.jpg',
       },
       {
-        media: '(max-width: 599px)',
+        media: '(not (min-width: 600px))',
         url: 'https://rokka-demos.rokka.io/STACK_CROP/variables-w-300-h-300/HASH/image.jpg',
       },
     ])

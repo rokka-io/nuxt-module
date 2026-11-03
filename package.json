@@ -1,7 +1,7 @@
 {
   "name": "@rokka-io/nuxt",
   "version": "1.0.2",
-  "description": "Render responsive images with rokka.io in Nuxt 3",
+  "description": "Render responsive images with rokka.io in Nuxt",
   "type": "module",
   "repository": {
     "type": "git",

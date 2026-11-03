@@ -75,14 +75,8 @@ const imageStylePictureMedia = defineImageStyle({
   type: 'pictures',
   pictures: [
     {
-      media: '(min-height: 600px)',
-      width: 375,
-      aspectRatio: 16 / 9,
-    },
-    {
-      viewport: 'md',
-      width: 40,
-      height: 40,
+      viewport: 'xl',
+      width: 1680,
     },
     {
       media: '(min-width: 600px) and (min-height: 400px)',
@@ -90,8 +84,13 @@ const imageStylePictureMedia = defineImageStyle({
       height: 300,
     },
     {
-      viewport: 'xl',
-      width: 1680,
+      media: '(min-height: 600px)',
+      width: 375,
+      aspectRatio: 16 / 9,
+    },
+    {
+      viewport: 'fallback',
+      width: 300,
     },
   ],
 })
@@ -100,6 +99,7 @@ const imageStyleSizes = defineImageStyle({
   type: 'sizes',
   aspectRatio: 16 / 9,
   sizes: {
+    fallback: 320,
     sm: 375,
     md: 768,
     lg: 980,
@@ -110,6 +110,7 @@ const imageStyleSizes = defineImageStyle({
 const imageStyleSizesKeepAspect = defineImageStyle({
   type: 'sizes',
   sizes: {
+    fallback: 320,
     sm: 375,
     md: 768,
     lg: 980,
