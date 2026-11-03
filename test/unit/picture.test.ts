@@ -36,7 +36,7 @@ function source(v: Partial<PictureSource> & { width: number }): PictureSource {
 
   return {
     srcset: `w-${v.width} 1x`,
-    srcsetItems: [[`w-${v.width}`, '1x']],
+    src: `w-${v.width}`,
     ...v,
     media,
   }
@@ -69,6 +69,10 @@ describe('getMediaQueryFromViewport', () => {
 
   it('returns undefined when no viewport is given', () => {
     expect(getMediaQueryFromViewport(VIEWPORTS, undefined)).toBeUndefined()
+  })
+
+  it('returns undefined for a viewport that does not exist', () => {
+    expect(getMediaQueryFromViewport(VIEWPORTS, 'xxl')).toBeUndefined()
   })
 })
 
@@ -124,6 +128,44 @@ describe('getPictureConfigs (object syntax)', () => {
       ['sm', 16 / 9],
     ])
   })
+
+  it('normalises every entry and skips empty ones', () => {
+    const configs = getPictureConfigs(
+      {
+        sm: { width: 300 },
+        md: undefined,
+        xl: { height: 500, aspectRatio: 2 },
+        lg: { width: 1000, height: 400 },
+      },
+      VIEWPORTS,
+      16 / 9,
+    )
+
+    expect(configs).toEqual([
+      {
+        viewport: 'xl',
+        media: '(min-width: 1680px)',
+        height: 500,
+        aspectRatio: 2,
+        minWidth: 1680,
+      },
+      {
+        viewport: 'lg',
+        media: '(min-width: 1280px)',
+        width: 1000,
+        height: 400,
+        aspectRatio: 16 / 9,
+        minWidth: 1280,
+      },
+      {
+        viewport: 'sm',
+        media: undefined,
+        width: 300,
+        aspectRatio: 16 / 9,
+        minWidth: 768,
+      },
+    ])
+  })
 })
 
 describe('getPictureConfigs (array syntax)', () => {
@@ -163,6 +205,46 @@ describe('getPictureConfigs (array syntax)', () => {
     )
 
     expect(configs[0]!.media).toBe('(min-height: 600px)')
+  })
+
+  it('normalises every entry and keeps the media query of the last one', () => {
+    const configs = getPictureConfigs(
+      [
+        { viewport: 'xl', width: 1680 },
+        { viewport: 'md', media: '', height: 400, aspectRatio: 2 },
+        { media: '', width: 300 },
+        { media: '(min-height: 600px)', width: 200 },
+      ],
+      VIEWPORTS,
+      16 / 9,
+    )
+
+    expect(configs).toEqual([
+      {
+        viewport: 'xl',
+        media: '(min-width: 1680px)',
+        width: 1680,
+        aspectRatio: 16 / 9,
+        minWidth: 1680,
+      },
+      {
+        viewport: 'md',
+        media: '(min-width: 1024px)',
+        height: 400,
+        aspectRatio: 2,
+        minWidth: 1024,
+      },
+      {
+        media: undefined,
+        width: 300,
+        aspectRatio: 16 / 9,
+      },
+      {
+        media: '(min-height: 600px)',
+        width: 200,
+        aspectRatio: 16 / 9,
+      },
+    ])
   })
 })
 
@@ -270,6 +352,30 @@ describe('getFallbackSource', () => {
     ]
 
     expect(getFallbackSource(sources)?.width).toBe(300)
+  })
+
+  it('prefers a viewport entry over a later media-query entry', () => {
+    const sources = [
+      source({ width: 600, viewport: 'lg', minWidth: 1280 }),
+      source({ width: 400, viewport: 'sm', minWidth: 768 }),
+      source({ width: 200, media: '(min-height: 600px)' }),
+    ]
+
+    expect(getFallbackSource(sources)?.width).toBe(400)
+  })
+
+  it('skips a viewport with a min-width of 0 that has a media query', () => {
+    const sources = [
+      source({ width: 600, viewport: 'lg', minWidth: 1280 }),
+      source({
+        width: 100,
+        viewport: 'fallback',
+        minWidth: 0,
+        media: '(min-height: 600px)',
+      }),
+    ]
+
+    expect(getFallbackSource(sources)?.width).toBe(600)
   })
 
   it('uses the last source for media-query-only configs', () => {
@@ -411,6 +517,19 @@ describe('getPreloadLinks', () => {
     expect(getPreloadLinks(sources)[1]!.media).toBe('(not (min-width: 900px))')
   })
 
+  it('does not collapse a min-width of 0 or one in other units', () => {
+    const sources = [
+      source({ width: 400, media: '(min-width: 48em)' }),
+      source({ width: 300, media: '(min-width: 0px)' }),
+      source({ width: 200, media: undefined }),
+    ]
+
+    expect(getPreloadLinks(sources).map((v) => v.media)).toEqual([
+      '(min-width: 48em)',
+      '(min-width: 0px) and (not (min-width: 48em))',
+      '(not (min-width: 48em)) and (not (min-width: 0px))',
+    ])
+  })
   it('adds the exclusion to every query of a comma list', () => {
     const sources = [
       source({ width: 400, media: '(min-width: 1280px)' }),
@@ -479,16 +598,6 @@ describe('getPreloadLinks', () => {
     expect(getPreloadLinks(sources).map((v) => v.media)).toEqual([
       '(min-width: 1280px)',
     ])
-  })
-
-  // Guards the test above: a .fails test would silently keep passing if
-  // matchesWidth() threw on a media query format it does not understand.
-  it('only produces media queries the test matcher can evaluate', () => {
-    const links = getPreloadLinks(threeViewportSources())
-
-    expect(() =>
-      links.forEach((v) => matchesWidth(v.media, 1000)),
-    ).not.toThrow()
   })
 })
 

@@ -38,12 +38,7 @@ export type PicturesInput =
 /**
  * A normalised picture config, after both syntaxes have been merged.
  */
-export type PictureConfig = {
-  viewport?: string
-  media?: string
-  width?: number
-  height?: number
-  aspectRatio?: number
+export type PictureConfig = PictureInputArrayItem & {
   minWidth?: number
 }
 
@@ -52,7 +47,11 @@ export type PictureConfig = {
  */
 export type PictureSource = {
   srcset: string
-  srcsetItems: [string, string][]
+
+  /**
+   * The URL of the first density, for the src of the <img>.
+   */
+  src?: string
   width: number
   height?: number
   media?: string
@@ -77,14 +76,8 @@ export function getMediaQueryFromViewport(
   viewports: Viewports,
   viewport?: string,
 ): string | undefined {
-  if (!viewport) {
-    return
-  }
-  const minWidth: number | undefined = viewports[viewport]
-
-  if (minWidth) {
-    return `(min-width: ${minWidth}px)`
-  }
+  const minWidth = viewport && viewports[viewport]
+  return minWidth ? `(min-width: ${minWidth}px)` : undefined
 }
 
 /**
@@ -100,46 +93,27 @@ export function getPictureConfigs(
   viewports: Viewports,
   rootAspectRatio?: number,
 ): PictureConfig[] {
-  // User provided an array.
+  const normalise = (v: PictureInputArrayItem): PictureConfig => ({
+    ...v,
+    media: v.media || getMediaQueryFromViewport(viewports, v.viewport),
+    aspectRatio: v.aspectRatio || rootAspectRatio,
+    minWidth: v.viewport ? viewports[v.viewport] : undefined,
+  })
+
   if (Array.isArray(pictures)) {
-    return pictures.map((v) => {
-      const media = v.media || getMediaQueryFromViewport(viewports, v.viewport)
-      return {
-        viewport: v.viewport,
-        media,
-        width: v.width,
-        height: v.height,
-        aspectRatio: v.aspectRatio || rootAspectRatio,
-        minWidth: v.viewport ? viewports[v.viewport] : undefined,
-      }
-    })
+    return pictures.map(normalise)
   }
 
-  // User provided an object. Convert it to an array.
-  return Object.entries(pictures)
-    .filter((entry): entry is [string, PictureInputSpec] => !!entry[1])
-    .map(([viewport, config]) => {
-      return {
-        viewport,
-        ...config,
-        aspectRatio: config.aspectRatio || rootAspectRatio,
-        minWidth: viewports[viewport] ?? 0,
-        media: getMediaQueryFromViewport(viewports, viewport),
-      }
-    })
-    .sort((a, b) => {
-      return b.minWidth - a.minWidth
-    })
-    .map((item, index, arr) => {
-      // The last one should not have a media query.
-      if (index === arr.length - 1) {
-        return {
-          ...item,
-          media: undefined,
-        }
-      }
-      return item
-    })
+  const configs = Object.entries(pictures)
+    .flatMap(([viewport, v]) => (v ? [normalise({ ...v, viewport })] : []))
+    .sort((a, b) => (b.minWidth ?? 0) - (a.minWidth ?? 0))
+
+  // The smallest one renders for every width below the others.
+  const last = configs.at(-1)
+  if (last) {
+    last.media = undefined
+  }
+  return configs
 }
 
 /**
@@ -189,20 +163,6 @@ export function getHeight(
 }
 
 /**
- * All sources that belong to a viewport, sorted by min-width, smallest first.
- */
-export function getSourcesWithMinWidthSorted(
-  sources: PictureSource[],
-): Array<PictureSource & { minWidth: number }> {
-  return sources
-    .filter(
-      (v): v is PictureSource & { minWidth: number } =>
-        v.minWidth !== undefined && v.minWidth > 0,
-    )
-    .sort((a, b) => a.minWidth - b.minWidth)
-}
-
-/**
  * The source used for the src attribute of the <img> tag.
  *
  * The first source without a media query, because that is the one <picture>
@@ -216,11 +176,11 @@ export function getSourcesWithMinWidthSorted(
 export function getFallbackSource(
   sources: PictureSource[],
 ): PictureSource | undefined {
-  return (
-    sources.find((v) => !v.media) ||
-    getSourcesWithMinWidthSorted(sources)[0] ||
-    sources[sources.length - 1]
-  )
+  const byMinWidth = sources
+    .filter((v) => (v.minWidth ?? 0) > 0)
+    .sort((a, b) => (a.minWidth ?? 0) - (b.minWidth ?? 0))
+
+  return sources.find((v) => !v.media) || byMinWidth[0] || sources.at(-1)
 }
 
 const MIN_WIDTH_QUERY = /^\(min-width: (\d+)px\)$/
@@ -290,36 +250,15 @@ function negate(query: string): string {
 }
 
 /**
- * Parse '(min-width: 768px)' into 768. Returns undefined for anything else.
- */
-function parseMinWidth(media: string): number | undefined {
-  const match = media.match(MIN_WIDTH_QUERY)
-  return match ? Number(match[1]) : undefined
-}
-
-/**
  * The smallest of the given min-width queries, or undefined if one of them is
- * not a plain min-width.
+ * not a plain min-width in pixels, or one of 0, which always matches.
  *
  * Staying below the smallest of a set of min-widths excludes all of them, so
  * they collapse into one.
  */
 function lowestMinWidth(preceding: string[]): number | undefined {
-  const minWidths: number[] = []
-
-  for (const media of preceding) {
-    const minWidth = parseMinWidth(media)
-
-    // A query that is not a plain min-width, or one that always matches,
-    // can not be collapsed.
-    if (minWidth === undefined || minWidth <= 0) {
-      return undefined
-    }
-
-    minWidths.push(minWidth)
-  }
-
-  return Math.min(...minWidths)
+  const minWidths = preceding.map((v) => Number(MIN_WIDTH_QUERY.exec(v)?.[1]))
+  return minWidths.every((v) => v > 0) ? Math.min(...minWidths) : undefined
 }
 
 /**

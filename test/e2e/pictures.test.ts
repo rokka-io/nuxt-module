@@ -338,4 +338,24 @@ describe('The <RokkaImage> component for pictures', async () => {
     // Should have a width because one is set explicitly.
     expect(data.sources[2]!.width).toEqual('375')
   })
+
+  it('drops an entry it can not determine a width for', async () => {
+    const page = await createPage('/pictures-invalid')
+    const data = await buildPictureData(page, 'partly-invalid')
+
+    expect(data.sources.map((v) => v.width)).toEqual(['1000', '300'])
+    expect(data.src).toBe(
+      'https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-300/HASH/image.jpg',
+    )
+    expect((await getPreloadLinks(page)).map((v) => v.media)).toEqual([
+      '(min-width: 1280px)',
+      '(not (min-width: 1280px))',
+    ])
+  })
+
+  it('renders nothing when no entry is usable', async () => {
+    const page = await createPage('/pictures-invalid')
+
+    expect(await page.locator('#invalid *').count()).toBe(0)
+  })
 })

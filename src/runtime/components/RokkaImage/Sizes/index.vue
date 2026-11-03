@@ -17,7 +17,6 @@ import {
 } from './../../../helpers/sizes'
 import { VIEWPORTS, DPR } from '#rokka/generated-types'
 import type {
-  BuildRokkaUrlVariables,
   DefineImageStyleConfigSizes,
   RokkaImageSource,
 } from '#rokka/types'
@@ -75,30 +74,19 @@ const emit = defineEmits<{
   error: [event: Event]
 }>()
 
-const buildUrl = (width: number, aspectRatio?: number, dpr?: string) => {
-  const variables: BuildRokkaUrlVariables = {
-    w: width,
-  }
-  let height = 0
-  let stack: string =
-    props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop
-
-  if (aspectRatio) {
-    height = Math.round(width / aspectRatio)
-  }
-
-  if (height) {
-    stack = props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
-    variables.h = height
-  }
+const buildUrl = (width: number, dpr?: string) => {
+  const aspectRatio = props.config.aspectRatio
+  const height = aspectRatio ? Math.round(width / aspectRatio) : 0
 
   return buildRokkaUrl(
-    stack,
+    height
+      ? props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
+      : props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop,
     dpr,
     props.source,
     props.fileName,
     props.host,
-    variables,
+    { w: width, h: height },
   )
 }
 
@@ -112,14 +100,13 @@ const sizes = computed(() => getSizesAttribute(props.config.sizes, VIEWPORTS))
 
 const src = computed(() => {
   const first = candidates.value[0]
-  return first ? buildUrl(first.width, props.config.aspectRatio, first.dpr) : ''
+  return first ? buildUrl(first.width, first.dpr) : ''
 })
 
 const srcset = computed(() =>
   candidates.value
     .map((v) => {
-      const url = buildUrl(v.width, props.config.aspectRatio, v.dpr)
-      return `${url} ${v.descriptor}w`
+      return `${buildUrl(v.width, v.dpr)} ${v.descriptor}w`
     })
     .join(', '),
 )

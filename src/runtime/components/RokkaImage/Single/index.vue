@@ -10,7 +10,6 @@
 <script lang="ts" setup>
 import { getImageAttributes, getSingleHeight } from './../../../helpers'
 import type {
-  BuildRokkaUrlVariables,
   DefineImageStyleConfigSingle,
   RokkaImageSource,
 } from '#rokka/types'
@@ -78,25 +77,17 @@ const src = computed(() => {
       props.host,
     )
   }
-  const variables: BuildRokkaUrlVariables = {
-    w: props.config.width,
-  }
   const height = getSingleHeight(props.config)
-  let stack =
-    props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop
-
-  if (height) {
-    stack = props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
-    variables.h = height
-  }
 
   return buildRokkaUrl(
-    stack,
+    height
+      ? props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
+      : props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop,
     '',
     props.source,
     props.fileName,
     props.host,
-    variables,
+    { w: props.config.width, h: height },
   )
 })
 

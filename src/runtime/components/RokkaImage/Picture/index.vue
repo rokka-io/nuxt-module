@@ -33,7 +33,6 @@ import {
 import { VIEWPORTS, DPR } from '#rokka/generated-types'
 import type {
   DefineImageStyleConfigPictures,
-  BuildRokkaUrlVariables,
   RokkaImageSource,
 } from '#rokka/types'
 import {
@@ -134,32 +133,17 @@ const emit = defineEmits<{
   error: [event: Event]
 }>()
 
-const buildUrl = (width: number, height?: number, dpr?: string) => {
-  const variables: BuildRokkaUrlVariables = {
-    w: width,
-    h: height,
-  }
-
-  let stack =
-    props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop
-
-  if (variables.h) {
-    stack = props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
-  }
-
-  return buildRokkaUrl(
-    stack,
+const buildUrl = (width: number, height?: number, dpr?: string) =>
+  buildRokkaUrl(
+    height
+      ? props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
+      : props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop,
     dpr,
     props.source,
     props.fileName,
     props.host,
-    variables,
+    { w: width, h: height },
   )
-}
-
-function notNullish<T>(val?: T | null | undefined): val is T {
-  return val != null
-}
 
 const sources = computed<PictureSource[]>(() => {
   return getPictureConfigs(
@@ -177,18 +161,13 @@ const sources = computed<PictureSource[]>(() => {
         )
         return null
       }
-      const srcsetItems: [string, string][] = DPR.map((v) => {
-        const url = buildUrl(width, height, v)
-        const pixelRatio = v || '1'
-
-        return [url, pixelRatio + 'x']
-      })
-
-      const srcset = srcsetItems.map((v) => v.join(' ')).join(', ')
+      const urls = DPR.map((v) => buildUrl(width, height, v))
 
       return {
-        srcset,
-        srcsetItems,
+        srcset: urls
+          .map((url, index) => `${url} ${DPR[index] || '1'}x`)
+          .join(', '),
+        src: urls[0],
         width,
         height,
         media: spec.media,
@@ -196,26 +175,15 @@ const sources = computed<PictureSource[]>(() => {
         minWidth: spec.minWidth,
       }
     })
-    .filter(notNullish)
+    .filter((v) => v !== null)
 })
 
+// The source for the <img>. It gets the srcset as well, for when no <source>
+// matches: below the smallest media query of an array without a catch-all
+// entry.
 const fallback = computed(() => {
   const source = getFallbackSource(sources.value)
-
-  if (!source) {
-    return null
-  }
-  const fallbackUrl = source.srcsetItems[0]?.[0]
-  if (!fallbackUrl) {
-    return null
-  }
-
-  // The srcset as well, for when no <source> matches: below the smallest
-  // media query of an array without a catch-all entry.
-  return {
-    src: fallbackUrl,
-    srcset: source.srcset,
-  }
+  return source?.src ? source : null
 })
 
 if (props.preload && import.meta.server) {
