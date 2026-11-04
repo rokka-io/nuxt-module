@@ -23,7 +23,12 @@ every tsconfig extends.
   too
 - `npm test`: all Vitest projects. The e2e tests need Chromium:
   `npx playwright-core install chromium`.
-- `npm run dev`: the playground in `playground/`
+- `npm run dev`: the playground in `playground/`. It renders from the rokka
+  organization `rokka-nuxt-module`. `npm run rokka:setup` creates the stacks
+  from `stacks/` there and uploads the test images in `playground/rokka/`, with
+  `ROKKA_API_KEY` from `playground/.env`. After a change in
+  `playground/rokka/images.ts`, `npm run rokka:images` renders the images again
+  and `rokka:setup` uploads them, which gives them new hashes.
 - `npm run prepack`: builds `dist/`
 - `npm run typecheck:dist`: after `prepack`, checks that `dist/module.d.mts`
   does not type the module as `any`. The build reads its compiler options from

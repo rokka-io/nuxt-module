@@ -2,51 +2,30 @@
   <div>
     <h1>Test rokka</h1>
 
-    <h3>Single image style</h3>
-    <RokkaImage v-bind="imageProps" :config="imageStyleSingle" />
+    <StyleExample title="Single image style" :config="imageStyleSingle" />
 
-    <h3>Pictures image style</h3>
-    <RokkaImage
-      :config="imageStylePicture"
-      v-bind="imageProps"
-      img-class="max-w-full h-auto"
-    />
+    <StyleExample title="Pictures image style" :config="imageStylePicture" />
 
-    <h3>Pictures image style with media query</h3>
-    <RokkaImage
+    <StyleExample
+      title="Pictures image style with media query"
       :config="imageStylePictureMedia"
-      v-bind="imageProps"
-      img-class="max-w-full h-auto"
     />
 
-    <h3>Sizes image style (16 / 9)</h3>
-    <RokkaImage
+    <StyleExample
+      title="Sizes image style (16 / 9)"
       :config="imageStyleSizes"
-      v-bind="imageProps"
-      img-class="w-full h-auto"
     />
 
-    <h3>Sizes image style (keep aspect ratio)</h3>
-    <RokkaImage
+    <StyleExample
+      title="Sizes image style (keep aspect ratio)"
       :config="imageStyleSizesKeepAspect"
-      v-bind="imageProps"
-      img-class="w-full h-auto"
     />
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineImageStyle, computed } from '#imports'
-
-const imageProps = computed(() => {
-  return {
-    hash: '61d4c9ece95f13cc624924a241cc06ac8e431c16',
-    sourceWidth: 1920,
-    sourceHeight: 1081,
-    alt: 'My alt text',
-    title: 'My title text',
-  }
-})
+import StyleExample from '../components/StyleExample.vue'
+import { defineImageStyle } from '#imports'
 
 const imageStyleSingle = defineImageStyle({
   type: 'single',
