@@ -1,4 +1,4 @@
-# Responsive images with rokka for Nuxt 3
+# Responsive images with rokka for Nuxt
 
 ## Setup
 
@@ -146,6 +146,12 @@ const imageStyle = defineImageStyle({
 })
 ```
 
+Without an entry that always matches, such as the `fallback` viewport, the
+`<img>` shows the entry with the smallest viewport, or else the last entry, when
+no entry matches.
+
+With a root `aspectRatio`, an entry can define only a `height`.
+
 ### `<img>` element with `srcset` and `sizes` attributes
 
 ```typescript
@@ -154,6 +160,7 @@ const crop = defineImageStyle({
   type: 'sizes',
   aspectRatio: 16 / 9,
   sizes: {
+    fallback: 320,
     sm: 375,
     md: 768,
     lg: 980,
@@ -165,6 +172,7 @@ const crop = defineImageStyle({
 const noCrop = defineImageStyle({
   type: 'sizes',
   sizes: {
+    fallback: 320,
     sm: 375,
     md: 768,
     lg: 980,
@@ -174,7 +182,8 @@ const noCrop = defineImageStyle({
 ```
 
 Use the special `fallback` viewport to define the size below the smallest
-viewport.
+viewport. Without it, the browser assumes that the image is as wide as the
+screen there.
 
 ### `<img>` element with a single src attribute
 
@@ -238,6 +247,8 @@ This will make it possible to define three different set of sizes per viewport.
 A `fallback` viewport with a min-width of 0 is added automatically, so
 `fallback` can not be used as the name of a viewport.
 
+Without this option, the viewports are `sm: 0`, `md: 768` and `lg: 1024`.
+
 ### dpr: `string[]`
 
 Define the DPR (device pixel ratios). If you set something like:
@@ -255,6 +266,24 @@ By default, the module assumes two stacks with name `fe_nuxt_crop` and
 `fe_nuxt_no_crop`. You can override this globally and define your own stack
 names.
 
+## Agent skill
+
+The package ships an [Agent Skill](https://agentskills.io) that teaches coding
+agents such as Claude Code, Cursor or Codex how to use this module and how rokka
+works. Link it from the installed package with the
+[skills CLI](https://github.com/vercel-labs/skills), so that it always matches
+the installed version of the module:
+
+```
+npx skills experimental_sync
+```
+
+Or install it from GitHub, which gets the version on the main branch:
+
+```
+npx skills add rokka-io/nuxt-module
+```
+
 ## Upgrading from 1.x
 
 - **The root `aspectRatio` of a `pictures` style now crops the image.** Entries
@@ -265,9 +294,29 @@ names.
   `<source>` elements then have no `height` attribute.
 - **`pictures` can be an array.** Code that reads `style.pictures` has to check
   `Array.isArray(style.pictures)` first. The `width` of an entry is now
-  optional, since an entry can define a `height` and an `aspectRatio` instead.
+  optional, since an entry can define a `height` and an `aspectRatio` instead,
+  or only a `height` when the style has a root `aspectRatio`.
+- **Attributes and listeners go to the `<img>` of a `pictures` style.** In 1.x
+  they landed on the `<picture>`, where `fetchpriority` and `@load` have no
+  effect. `class` and `style` stay on the `<picture>`. CSS or scripts that look
+  for an `id` or a `data-*` attribute on the `<picture>` have to look at the
+  `<img>`.
 - **`fallback` is a reserved viewport name.** It is added to the configured
   viewports with a min-width of 0. Rename a viewport called `fallback`.
+- **Configured viewports replace the default ones.** In 1.x the defaults `sm`,
+  `md` and `lg` were added to the configured `viewports`, so image styles could
+  use them even when the project did not define them. Add them to `viewports` if
+  image styles still use them.
+- **A `single` style with both `height` and `aspectRatio` renders the
+  `height`.** In 1.x the URL followed the `aspectRatio`, while the `height`
+  attribute followed `height`.
 - **The preload links of a `pictures` style changed.** Every `<source>` now gets
   its own link, and their media queries do not overlap, so the browser preloads
-  only the image that the `<picture>` renders.
+  only the image that the `<picture>` renders. A media query with a media type,
+  like `screen and (min-width: 768px)`, can not be excluded, so the links end
+  after its `<source>`.
+- **The `sizes` attribute uses the exact min-width of each viewport.** 1.x
+  subtracted one pixel: `(min-width: 767px)` for a viewport of 768.
+- **A `srcset` lists every width once.** When two entries of a `sizes` style
+  render a file of the same width, such as 400 at 2x and 800 at 1x, only the one
+  with the lower density is kept.

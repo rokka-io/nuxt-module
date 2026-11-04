@@ -16,7 +16,7 @@ describe('The <RokkaImage> component for a single image', async () => {
     expect(img.width).toEqual('400')
 
     // The height is defined in the image style.
-    expect(img.width).toEqual('400')
+    expect(img.height).toEqual('400')
 
     expect(img.src).toContain('STACK_CROP')
     expect(img.src).toContain('variables-w-400-h-400')
@@ -44,5 +44,28 @@ describe('The <RokkaImage> component for a single image', async () => {
     expect(img.src).toEqual(
       'https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-500/HASH/image.jpg',
     )
+  })
+
+  it('uses the height when both height and aspectRatio are set.', async () => {
+    const page = await createPage('/single-height-aspect-ratio')
+    const img = await buildSingleData(page, 'single')
+
+    expect(img.src).toEqual(
+      'https://rokka-demos.rokka.io/STACK_CROP/variables-w-400-h-300/HASH/image.jpg',
+    )
+    expect(img.height).toEqual('300')
+  })
+
+  it('renders a preload link for an image style and a stack name.', async () => {
+    const page = await createPage('/single-preload')
+    const style = await buildSingleData(page, 'single')
+    const stack = await buildSingleData(page, 'stack')
+
+    const links = page.locator('link[rel="preload"][as="image"]')
+    expect(
+      await links.evaluateAll((elements) =>
+        elements.map((element) => element.getAttribute('href')),
+      ),
+    ).toEqual([style.src, stack.src])
   })
 })

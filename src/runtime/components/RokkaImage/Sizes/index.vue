@@ -1,5 +1,6 @@
 <template>
   <img
+    v-if="src"
     :src="src"
     :srcset="srcset"
     :sizes="sizes"
@@ -10,9 +11,12 @@
 
 <script lang="ts" setup>
 import { getImageAttributes } from './../../../helpers'
-import { VIEWPORTS, DPR, type Viewport } from '#rokka/generated-types'
+import {
+  getSizesAttribute,
+  getSrcsetCandidates,
+} from './../../../helpers/sizes'
+import { VIEWPORTS, DPR } from '#rokka/generated-types'
 import type {
-  BuildRokkaUrlVariables,
   DefineImageStyleConfigSizes,
   RokkaImageSource,
 } from '#rokka/types'
@@ -70,30 +74,19 @@ const emit = defineEmits<{
   error: [event: Event]
 }>()
 
-const buildUrl = (width: number, aspectRatio?: number, dpr?: string) => {
-  const variables: BuildRokkaUrlVariables = {
-    w: width,
-  }
-  let height = 0
-  let stack: string =
-    props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop
-
-  if (aspectRatio) {
-    height = Math.round(width / aspectRatio)
-  }
-
-  if (height) {
-    stack = props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
-    variables.h = height
-  }
+const buildUrl = (width: number, dpr?: string) => {
+  const aspectRatio = props.config.aspectRatio
+  const height = aspectRatio ? Math.round(width / aspectRatio) : 0
 
   return buildRokkaUrl(
-    stack,
+    height
+      ? props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
+      : props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop,
     dpr,
     props.source,
     props.fileName,
     props.host,
-    variables,
+    { w: width, h: height },
   )
 }
 
@@ -101,46 +94,24 @@ const imageAttributes = computed(() =>
   getImageAttributes(props.config, props.sourceWidth, props.sourceHeight),
 )
 
-const images = computed(() =>
-  Object.values(props.config.sizes)
-    .map((width) => {
-      return DPR.map((dpr) => {
-        const dprNumber = Number.parseFloat(dpr || '1')
-        return {
-          src: buildUrl(width, props.config.aspectRatio, dpr),
-          width: Math.round(width * dprNumber),
-        }
-      })
-    })
-    .flat(),
-)
+const candidates = computed(() => getSrcsetCandidates(props.config.sizes, DPR))
 
-const sizes = computed(() =>
-  Object.entries(props.config.sizes)
-    .map(([viewport, width]) => {
-      const minWidth = VIEWPORTS[viewport as Viewport] - 1
-      return { width, minWidth }
-    })
-    .sort((a, b) => b.minWidth - a.minWidth)
-    .map((v) => {
-      return v.minWidth < 0
-        ? v.width + 'px'
-        : `(min-width: ${v.minWidth}px) ${v.width}px`
-    })
-    .join(', '),
-)
+const sizes = computed(() => getSizesAttribute(props.config.sizes, VIEWPORTS))
 
-const src = computed(() => (images.value[0] ? images.value[0].src : ''))
+const src = computed(() => {
+  const first = candidates.value[0]
+  return first ? buildUrl(first.width, first.dpr) : ''
+})
 
 const srcset = computed(() =>
-  images.value
+  candidates.value
     .map((v) => {
-      return `${v.src} ${v.width}w`
+      return `${buildUrl(v.width, v.dpr)} ${v.descriptor}w`
     })
     .join(', '),
 )
 
-if (props.preload && import.meta.server) {
+if (props.preload && import.meta.server && srcset.value) {
   useHead({
     link: [
       {

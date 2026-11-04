@@ -1,4 +1,8 @@
 {
+  // @nuxt/module-builder reads the compiler options for the type declarations
+  // of dist/module.mjs from this file. Without them, the type of the module
+  // is `any`.
+  "extends": "./.nuxt/tsconfig.node.json",
   "files": [],
   "references": [
     { "path": "./tsconfig.runtime.json" },

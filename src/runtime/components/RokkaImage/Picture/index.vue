@@ -1,5 +1,5 @@
 <template>
-  <picture v-if="fallback">
+  <picture v-if="fallback" :class="$attrs.class" :style="$attrs.style">
     <source
       v-for="(item, index) in sources"
       :key="index"
@@ -9,9 +9,11 @@
       :height="item.height"
     />
     <img
+      v-bind="getImgAttrs()"
       :alt="alt"
       :title="title"
       :src="fallback.src"
+      :srcset="fallback.srcset"
       :loading="loading"
       :class="imgClass"
       @error="emit('error', $event)"
@@ -31,10 +33,33 @@ import {
 import { VIEWPORTS, DPR } from '#rokka/generated-types'
 import type {
   DefineImageStyleConfigPictures,
-  BuildRokkaUrlVariables,
   RokkaImageSource,
 } from '#rokka/types'
-import { buildRokkaUrl, computed, useRuntimeConfig, useHead } from '#imports'
+import {
+  buildRokkaUrl,
+  computed,
+  useAttrs,
+  useRuntimeConfig,
+  useHead,
+} from '#imports'
+
+// Attributes and listeners go to the <img>, like for the other types, where
+// `fetchpriority` or `@load` work. Only `class` and `style` stay on the
+// <picture>.
+defineOptions({ inheritAttrs: false })
+
+const attrs = useAttrs()
+
+/**
+ * The attributes for the <img>: all but `class` and `style`.
+ *
+ * A function and not a computed, since attrs are not reactive.
+ */
+function getImgAttrs() {
+  return Object.fromEntries(
+    Object.entries(attrs).filter(([key]) => key !== 'class' && key !== 'style'),
+  )
+}
 
 const runtimeConfig = useRuntimeConfig()
 
@@ -108,32 +133,17 @@ const emit = defineEmits<{
   error: [event: Event]
 }>()
 
-const buildUrl = (width: number, height?: number, dpr?: string) => {
-  const variables: BuildRokkaUrlVariables = {
-    w: width,
-    h: height,
-  }
-
-  let stack =
-    props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop
-
-  if (variables.h) {
-    stack = props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
-  }
-
-  return buildRokkaUrl(
-    stack,
+const buildUrl = (width: number, height?: number, dpr?: string) =>
+  buildRokkaUrl(
+    height
+      ? props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
+      : props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop,
     dpr,
     props.source,
     props.fileName,
     props.host,
-    variables,
+    { w: width, h: height },
   )
-}
-
-function notNullish<T>(val?: T | null | undefined): val is T {
-  return val != null
-}
 
 const sources = computed<PictureSource[]>(() => {
   return getPictureConfigs(
@@ -151,18 +161,13 @@ const sources = computed<PictureSource[]>(() => {
         )
         return null
       }
-      const srcsetItems: [string, string][] = DPR.map((v) => {
-        const url = buildUrl(width, height, v)
-        const pixelRatio = v || '1'
-
-        return [url, pixelRatio + 'x']
-      })
-
-      const srcset = srcsetItems.map((v) => v.join(' ')).join(', ')
+      const urls = DPR.map((v) => buildUrl(width, height, v))
 
       return {
-        srcset,
-        srcsetItems,
+        srcset: urls
+          .map((url, index) => `${url} ${DPR[index] || '1'}x`)
+          .join(', '),
+        src: urls[0],
         width,
         height,
         media: spec.media,
@@ -170,25 +175,15 @@ const sources = computed<PictureSource[]>(() => {
         minWidth: spec.minWidth,
       }
     })
-    .filter(notNullish)
+    .filter((v) => v !== null)
 })
 
+// The source for the <img>. It gets the srcset as well, for when no <source>
+// matches: below the smallest media query of an array without a catch-all
+// entry.
 const fallback = computed(() => {
   const source = getFallbackSource(sources.value)
-
-  if (!source) {
-    return null
-  }
-  const fallbackUrl = source.srcsetItems[0]?.[0]
-  if (!fallbackUrl) {
-    return null
-  }
-
-  return {
-    src: fallbackUrl,
-    width: source.width,
-    height: source.height,
-  }
+  return source?.src ? source : null
 })
 
 if (props.preload && import.meta.server) {

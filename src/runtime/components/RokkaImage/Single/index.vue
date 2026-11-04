@@ -8,13 +8,12 @@
 </template>
 
 <script lang="ts" setup>
-import { getImageAttributes } from './../../../helpers'
+import { getImageAttributes, getSingleHeight } from './../../../helpers'
 import type {
-  BuildRokkaUrlVariables,
   DefineImageStyleConfigSingle,
   RokkaImageSource,
 } from '#rokka/types'
-import { useRuntimeConfig, buildRokkaUrl, computed } from '#imports'
+import { useRuntimeConfig, buildRokkaUrl, computed, useHead } from '#imports'
 
 const runtimeConfig = useRuntimeConfig()
 
@@ -78,29 +77,17 @@ const src = computed(() => {
       props.host,
     )
   }
-  const variables: BuildRokkaUrlVariables = {
-    w: props.config.width,
-  }
-  let height = props.config.height || 0
-  let stack =
-    props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop
-
-  if (props.config.aspectRatio) {
-    height = Math.round(props.config.width / props.config.aspectRatio)
-  }
-
-  if (height) {
-    stack = props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
-    variables.h = height
-  }
+  const height = getSingleHeight(props.config)
 
   return buildRokkaUrl(
-    stack,
+    height
+      ? props.config.stacks?.crop || runtimeConfig.public.rokkaStackCrop
+      : props.config.stacks?.noCrop || runtimeConfig.public.rokkaStackNoCrop,
     '',
     props.source,
     props.fileName,
     props.host,
-    variables,
+    { w: props.config.width, h: height },
   )
 })
 
@@ -109,4 +96,10 @@ const imageAttributes = computed(() =>
     ? getImageAttributes(props.config, props.sourceWidth, props.sourceHeight)
     : {},
 )
+
+if (props.preload && import.meta.server) {
+  useHead({
+    link: [{ rel: 'preload', as: 'image', href: src.value }],
+  })
+}
 </script>

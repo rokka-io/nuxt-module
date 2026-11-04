@@ -1,7 +1,7 @@
 {
   "name": "@rokka-io/nuxt",
   "version": "1.0.2",
-  "description": "Render responsive images with rokka.io in Nuxt 3",
+  "description": "Render responsive images with rokka.io in Nuxt",
   "type": "module",
   "repository": {
     "type": "git",
@@ -22,7 +22,8 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "skills"
   ],
   "scripts": {
     "prepare": "nuxt-module-build prepare",
@@ -33,8 +34,11 @@
     "typecheck:runtime": "vue-tsc --noEmit -p tsconfig.runtime.json",
     "typecheck:playground": "vue-tsc --noEmit -p ./playground/tsconfig.app.json",
     "typecheck:test": "vue-tsc --noEmit -p tsconfig.test.json",
+    "typecheck:dist": "vue-tsc --noEmit -p tsconfig.package.json",
     "dev:build": "nuxi generate playground",
     "dev:prepare": "nuxt-module-build build --stub && nuxt-module-build prepare && nuxi prepare playground",
+    "rokka:images": "node playground/rokka/generate.ts",
+    "rokka:setup": "node --env-file-if-exists=playground/.env playground/rokka/setup.ts",
     "lint": "oxlint src && eslint ./src",
     "lint:fix": "oxlint src --fix && eslint ./src --fix",
     "format": "oxfmt",

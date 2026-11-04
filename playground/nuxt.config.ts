@@ -13,26 +13,14 @@ export default defineNuxtConfig({
     },
   },
 
-  vite: {
-    server: {
-      watch: {
-        usePolling: true,
-      },
-    },
-  },
-
   rokka: {
-    host: 'rokka-demos.rokka.io',
+    host: 'rokka-nuxt-module.rokka.io',
     dpr: ['', '1.5', '2'],
     viewports: {
       sm: 768,
       md: 1024,
       lg: 1280,
       xl: 1680,
-    },
-    stacks: {
-      noCrop: 'fe_nuxt_no_crop_copy',
-      crop: 'fe_nuxt_crop_copy',
     },
   },
 

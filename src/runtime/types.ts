@@ -1,5 +1,8 @@
 import type { Viewport } from '#rokka/generated-types'
 
+/**
+ * An entry of a `pictures` style: a width, or a height with an aspect ratio.
+ */
 export type DefineImageStyleConfigPicturesViewport =
   | {
       width: number
@@ -10,6 +13,22 @@ export type DefineImageStyleConfigPicturesViewport =
       width?: never
       height: number
       aspectRatio: number
+    }
+
+/**
+ * An entry of a `pictures` style with a root aspect ratio: a height alone is
+ * enough, since the root aspect ratio gives the width.
+ */
+export type DefineImageStyleConfigPicturesViewportWithRatio =
+  | {
+      width: number
+      height?: number
+      aspectRatio?: number
+    }
+  | {
+      width?: never
+      height: number
+      aspectRatio?: number
     }
 
 export type DefineImageStyleStacks = {
@@ -60,7 +79,7 @@ export type DefineImageStyleConfigSizes = {
   aspectRatio?: number
 }
 
-export type DefineImageStyleConfigPictures = {
+type DefineImageStyleConfigPicturesWith<Entry> = {
   /**
    * Type signature to render a <picture> image.
    */
@@ -70,14 +89,6 @@ export type DefineImageStyleConfigPictures = {
    * Override the default stacks to use.
    */
   stacks?: DefineImageStyleStacks
-
-  /**
-   * The default aspect ratio of the image for all viewports.
-   *
-   * It's possible to override the aspect ratio for every viewport
-   * individually.
-   */
-  aspectRatio?: number
 
   /**
    * Define the exact size of the rendered image for every viewport.
@@ -90,18 +101,40 @@ export type DefineImageStyleConfigPictures = {
    * the first source whose media query matches.
    */
   pictures:
-    | Partial<Record<Viewport, DefineImageStyleConfigPicturesViewport>>
+    | Partial<Record<Viewport, Entry>>
     | Array<
         | ({
             viewport: Viewport
             media?: never
-          } & DefineImageStyleConfigPicturesViewport)
+          } & Entry)
         | ({
             media: string
             viewport?: never
-          } & DefineImageStyleConfigPicturesViewport)
+          } & Entry)
       >
 }
+
+export type DefineImageStyleConfigPictures =
+  | (DefineImageStyleConfigPicturesWith<DefineImageStyleConfigPicturesViewport> & {
+      /**
+       * The default aspect ratio of the image for all viewports. It crops
+       * every entry without its own height or aspect ratio.
+       *
+       * It's possible to override the aspect ratio for every viewport
+       * individually.
+       */
+      aspectRatio?: number
+    })
+  | (DefineImageStyleConfigPicturesWith<DefineImageStyleConfigPicturesViewportWithRatio> & {
+      /**
+       * The default aspect ratio of the image for all viewports. It crops
+       * every entry without its own height or aspect ratio.
+       *
+       * It's possible to override the aspect ratio for every viewport
+       * individually.
+       */
+      aspectRatio: number
+    })
 
 export type DefineImageStyleConfigSingle = {
   /**

@@ -121,3 +121,30 @@ export async function getSizesPreloadLink(page: Page) {
     imagesizes: parseImageSizes(imagesizes),
   }
 }
+
+/**
+ * At the current window size: the srcsets of the preload links whose media
+ * query matches, and the srcset of the image the <picture> renders, which is
+ * the first matching <source>, or else the <img>.
+ */
+export function getPreloadedAndRendered(page: Page, id: string) {
+  return page.evaluate((id) => {
+    const matches = (media: string | null) =>
+      !media || window.matchMedia(media).matches
+
+    const preloaded = [
+      ...document.querySelectorAll('link[rel="preload"][as="image"]'),
+    ]
+      .filter((link) => matches(link.getAttribute('media')))
+      .map((link) => link.getAttribute('imagesrcset'))
+
+    const source = [...document.querySelectorAll(`#${id} picture source`)].find(
+      (v) => matches(v.getAttribute('media')),
+    )
+    const rendered = (
+      source || document.querySelector(`#${id} picture img`)
+    )?.getAttribute('srcset')
+
+    return { preloaded, rendered }
+  }, id)
+}

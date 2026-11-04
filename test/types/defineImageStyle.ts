@@ -6,7 +6,12 @@
  */
 import { expectTypeOf } from 'vitest'
 import { defineImageStyle } from '../../src/runtime/composables/rokka/defineImageStyle'
-import type { DefineImageStyleConfigPicturesViewport } from '../../src/runtime/types'
+import type {
+  DefineImageStyleConfigPictures,
+  DefineImageStyleConfigPicturesViewport,
+  DefineImageStyleConfigSingle,
+  DefineImageStyleConfigSizes,
+} from '../../src/runtime/types'
 
 // Object syntax: a width, or a height with an aspect ratio.
 defineImageStyle({
@@ -30,10 +35,22 @@ defineImageStyle({
   ],
 })
 
+// @ts-expect-error An entry needs a width, or a height with an aspect ratio.
 defineImageStyle({
   type: 'pictures',
-  // @ts-expect-error An entry needs a width, or a height with an aspect ratio.
   pictures: { md: { height: 500 } },
+})
+
+// With a root aspect ratio, a height alone is enough.
+defineImageStyle({
+  type: 'pictures',
+  aspectRatio: 2,
+  pictures: { md: { height: 500 } },
+})
+defineImageStyle({
+  type: 'pictures',
+  aspectRatio: 2,
+  pictures: [{ viewport: 'md', height: 500 }],
 })
 
 defineImageStyle({
@@ -59,3 +76,35 @@ defineImageStyle({
 // The width can be read from either variant of an entry.
 declare const entry: DefineImageStyleConfigPicturesViewport
 expectTypeOf(entry.width).toEqualTypeOf<number | undefined>()
+
+defineImageStyle({
+  type: 'single',
+  width: 100,
+  // @ts-expect-error Unknown properties are rejected for every type.
+  heigth: 100,
+})
+
+defineImageStyle({
+  type: 'sizes',
+  sizes: { md: 100 },
+  // @ts-expect-error Unknown properties are rejected for every type.
+  aspectratio: 2,
+})
+
+// The style keeps its type, so its properties can be read.
+const single = defineImageStyle({ type: 'single', width: 100 })
+expectTypeOf(single).toEqualTypeOf<DefineImageStyleConfigSingle>()
+expectTypeOf(single.width).toEqualTypeOf<number>()
+
+const sizes = defineImageStyle({ type: 'sizes', sizes: { md: 100 } })
+expectTypeOf(sizes).toEqualTypeOf<DefineImageStyleConfigSizes>()
+
+const pictures = defineImageStyle({
+  type: 'pictures',
+  pictures: { md: { width: 100 } },
+})
+expectTypeOf(pictures).toEqualTypeOf<DefineImageStyleConfigPictures>()
+// The README's upgrade note.
+if (Array.isArray(pictures.pictures)) {
+  expectTypeOf(pictures.pictures[0]!.media).toEqualTypeOf<string | undefined>()
+}

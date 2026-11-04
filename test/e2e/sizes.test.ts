@@ -18,19 +18,19 @@ describe('The <RokkaImage> component for sizes', async () => {
         "loading": null,
         "sizes": [
           {
-            "mediaQuery": "(min-width: 1679px)",
+            "mediaQuery": "(min-width: 1680px)",
             "width": "1200px",
           },
           {
-            "mediaQuery": "(min-width: 1279px)",
+            "mediaQuery": "(min-width: 1280px)",
             "width": "980px",
           },
           {
-            "mediaQuery": "(min-width: 1023px)",
+            "mediaQuery": "(min-width: 1024px)",
             "width": "768px",
           },
           {
-            "mediaQuery": "(min-width: 767px)",
+            "mediaQuery": "(min-width: 768px)",
             "width": "375px",
           },
         ],
@@ -131,5 +131,13 @@ describe('The <RokkaImage> component for sizes', async () => {
     expect(img.src).toMatchInlineSnapshot(
       `"https://rokka-demos.rokka.io/STACK_NO_CROP/variables-w-200/HASH/image.jpg"`,
     )
+  })
+
+  it('renders nothing for empty sizes', async () => {
+    const page = await createPage('/sizes-empty')
+
+    expect(await page.locator('#sizes img').count()).toBe(0)
+    expect(await page.locator('link[as="image"]').count()).toBe(0)
+    expect(await page.locator('#failed').textContent()).toBe('false')
   })
 })

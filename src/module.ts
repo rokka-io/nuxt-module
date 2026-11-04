@@ -16,8 +16,11 @@ export type ModuleOptions = {
 
   /**
    * Object of viewport name and min-width.
+   *
+   * Defaults to { sm: 0, md: 768, lg: 1024 } when not set. Configured
+   * viewports replace the default ones.
    */
-  viewports: Record<string, number>
+  viewports?: Record<string, number>
 
   /**
    * The device pixel ratios (DPR) to support for srcset and picture images.
@@ -35,7 +38,7 @@ export type ModuleOptions = {
      *
      * The stack must define a variable "w" and "h" for width and height.
      */
-    crop: string
+    crop?: string
 
     /**
      * The stack to use when the image should not be cropped.
@@ -43,7 +46,7 @@ export type ModuleOptions = {
      *
      * The stack must define a variable "w" for the width.
      */
-    noCrop: string
+    noCrop?: string
   }
 }
 
@@ -56,15 +59,14 @@ export default defineNuxtModule<ModuleOptions>({
       nuxt: '>=3.8.0',
     },
   },
+  // The default viewports are not part of the defaults, because Nuxt merges
+  // the defaults into the configured options: configured viewports would get
+  // the default ones on top.
   defaults: {
     host: '',
-    viewports: {
-      sm: 0,
-      md: 768,
-      lg: 1024,
-    },
   },
   setup(options, nuxt) {
+    const viewports = options.viewports || { sm: 0, md: 768, lg: 1024 }
     const { resolve } = createResolver(import.meta.url)
     const runtimeDir = fileURLToPath(new URL('./runtime', import.meta.url))
 
@@ -92,10 +94,7 @@ export default defineNuxtModule<ModuleOptions>({
       write: true,
       filename: 'rokka/generated-types.ts',
       getContents: () => {
-        if (!options.viewports) {
-          throw new Error('Missing viewports in rokka options.')
-        }
-        const viewports = Object.entries({ fallback: 0, ...options.viewports })
+        const entries = Object.entries({ fallback: 0, ...viewports })
           .map(([key, value]) => {
             return `'${key}': ${value}`
           })
@@ -104,7 +103,7 @@ export default defineNuxtModule<ModuleOptions>({
 export const DPR = ${JSON.stringify(dpr)}
 
 export const VIEWPORTS = {
-  ${viewports}
+  ${entries}
 } as const
 
 export type Viewport = keyof typeof VIEWPORTS`
